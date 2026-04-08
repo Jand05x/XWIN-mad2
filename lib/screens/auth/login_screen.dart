@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
   @override
   _LoginScreenState createState() => _LoginScreenState();
 }
@@ -294,7 +297,8 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _handleLogin() async {
-    if (emailController.text.isEmpty) {
+    // Basic empty field checks
+    if (emailController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Please enter your email'),
@@ -321,22 +325,78 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     setState(() => isLoading = true);
-    await Future.delayed(Duration(seconds: 1));
-    setState(() => isLoading = false);
 
-    if (mounted) {
-      String route = '';
-      switch (selectedRole) {
-        case 'hospital':
-          route = '/hospital_dashboard';
-          break;
-        case 'admin':
-          route = '/admin_dashboard';
-          break;
-        default:
-          route = '/home';
+    try {
+      // Real Firebase Auth sign in
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text,
+      );
+
+      // If we get here, login was successful
+      if (mounted) {
+        setState(() => isLoading = false);
+
+        String route = '';
+        switch (selectedRole) {
+          case 'hospital':
+            route = '/hospital_dashboard';
+            break;
+          case 'admin':
+            route = '/admin_dashboard';
+            break;
+          default:
+            route = '/home';
+        }
+        Navigator.pushReplacementNamed(context, route);
       }
-      Navigator.pushReplacementNamed(context, route);
+    } on FirebaseAuthException catch (e) {
+      // Firebase gave us a specific auth error
+      setState(() => isLoading = false);
+
+      String message = 'Login failed. Please try again.';
+
+      if (e.code == 'user-not-found') {
+        message = 'No account found with this email.';
+      } else if (e.code == 'wrong-password') {
+        message = 'Incorrect password. Please try again.';
+      } else if (e.code == 'invalid-email') {
+        message = 'The email address is not valid.';
+      } else if (e.code == 'user-disabled') {
+        message = 'This account has been disabled.';
+      } else if (e.code == 'too-many-requests') {
+        message = 'Too many attempts. Please wait and try again.';
+      } else if (e.code == 'invalid-credential') {
+        message = 'Email or password is incorrect.';
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Color(0xFFC62828),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      // Any other unexpected error
+      setState(() => isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Something went wrong. Please try again.'),
+            backgroundColor: Color(0xFFC62828),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
     }
   }
 

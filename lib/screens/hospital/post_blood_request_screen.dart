@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class PostBloodRequestScreen extends StatefulWidget {
+  const PostBloodRequestScreen({super.key});
+
   @override
   _PostBloodRequestScreenState createState() => _PostBloodRequestScreenState();
 }
@@ -77,7 +79,7 @@ class _PostBloodRequestScreenState extends State<PostBloodRequestScreen> {
                 ],
               ),
               child: DropdownButtonFormField<String>(
-                value: selectedBloodType,
+                initialValue: selectedBloodType,
                 decoration: InputDecoration(
                   border: InputBorder.none,
                   icon: Icon(
@@ -154,7 +156,7 @@ class _PostBloodRequestScreenState extends State<PostBloodRequestScreen> {
                 ],
               ),
               child: DropdownButtonFormField<String>(
-                value: selectedUrgency,
+                initialValue: selectedUrgency,
                 decoration: InputDecoration(
                   border: InputBorder.none,
                   icon: Icon(

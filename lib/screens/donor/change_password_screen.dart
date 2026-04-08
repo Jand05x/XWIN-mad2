@@ -1,6 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
+  const ChangePasswordScreen({super.key});
+
   @override
   _ChangePasswordScreenState createState() => _ChangePasswordScreenState();
 }
@@ -15,6 +18,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   bool obscureCurrent = true;
   bool obscureNew = true;
   bool obscureConfirm = true;
+  bool isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -108,11 +112,23 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                onPressed: _changePassword,
-                child: Text(
-                  'Update Password',
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
-                ),
+                onPressed: isLoading ? null : _changePassword,
+                child: isLoading
+                    ? SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.5,
+                        ),
+                      )
+                    : Text(
+                        'Update Password',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
               ),
             ),
           ],
@@ -184,36 +200,76 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     );
   }
 
-  void _changePassword() {
+  void _changePassword() async {
+    // Local validation first
     if (currentPasswordController.text.isEmpty) {
-      _showMessage('Please enter current password');
+      _showMessage('Please enter your current password', isError: true);
       return;
     }
     if (newPasswordController.text.isEmpty ||
         newPasswordController.text.length < 6) {
-      _showMessage('Password should be at least 6 characters');
+      _showMessage('New password must be at least 6 characters', isError: true);
       return;
     }
     if (newPasswordController.text != confirmPasswordController.text) {
-      _showMessage('Passwords do not match');
+      _showMessage('Passwords do not match', isError: true);
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Password changed successfully!'),
-        backgroundColor: Color(0xFF2E7D32),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
-    Navigator.pop(context);
+    setState(() => isLoading = true);
+
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+
+      if (user == null || user.email == null) {
+        throw Exception('No user is currently logged in.');
+      }
+
+      // Step 1: Re-authenticate — Firebase requires this before changing password
+      AuthCredential credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: currentPasswordController.text,
+      );
+
+      await user.reauthenticateWithCredential(credential);
+
+      // Step 2: Now update to the new password
+      await user.updatePassword(newPasswordController.text);
+
+      if (mounted) {
+        setState(() => isLoading = false);
+        _showMessage('Password updated successfully!', isError: false);
+        Navigator.pop(context);
+      }
+    } on FirebaseAuthException catch (e) {
+      setState(() => isLoading = false);
+
+      String message = 'Failed to update password. Please try again.';
+
+      if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
+        message = 'Current password is incorrect.';
+      } else if (e.code == 'weak-password') {
+        message = 'New password must be at least 6 characters.';
+      } else if (e.code == 'requires-recent-login') {
+        message = 'Session expired. Please log out and log in again.';
+      }
+
+      if (mounted) {
+        _showMessage(message, isError: true);
+      }
+    } catch (e) {
+      setState(() => isLoading = false);
+      if (mounted) {
+        _showMessage('Something went wrong. Please try again.', isError: true);
+      }
+    }
   }
 
-  void _showMessage(String msg) {
+  void _showMessage(String msg, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
+        backgroundColor: isError ? Color(0xFFC62828) : Color(0xFF2E7D32),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),

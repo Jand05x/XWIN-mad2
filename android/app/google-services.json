@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "677104751369",
+    "project_id": "xwin2-40f87",
+    "storage_bucket": "xwin2-40f87.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:677104751369:android:fc1bb5085ff4bd2e2bb9d8",
+        "android_client_info": {
+          "package_name": "com.example.xwin2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCBo5rxW99s2HHB9klHBP2u_GDLpWvJbiI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

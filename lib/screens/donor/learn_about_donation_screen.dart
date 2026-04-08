@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class LearnAboutDonationScreen extends StatelessWidget {
+  const LearnAboutDonationScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

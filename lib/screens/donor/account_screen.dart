@@ -1,6 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class AccountScreen extends StatelessWidget {
+  const AccountScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -192,10 +195,7 @@ class AccountScreen extends StatelessWidget {
             child: Text('Cancel', style: TextStyle(color: Color(0xFF8E8E93))),
           ),
           TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pushReplacementNamed(context, '/login');
-            },
+            onPressed: () => _handleLogout(context),
             child: Text(
               'Logout',
               style: TextStyle(
@@ -207,5 +207,33 @@ class AccountScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void _handleLogout(BuildContext context) async {
+    // Close the dialog first
+    Navigator.pop(context);
+
+    try {
+      // Real Firebase sign out
+      await FirebaseAuth.instance.signOut();
+
+      if (context.mounted) {
+        // Go back to welcome screen and clear the entire navigation stack
+        Navigator.pushReplacementNamed(context, '/welcome');
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to sign out. Please try again.'),
+            backgroundColor: Color(0xFFC62828),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    }
   }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class SettingsScreen extends StatefulWidget {
+  const SettingsScreen({super.key});
+
   @override
   _SettingsScreenState createState() => _SettingsScreenState();
 }
@@ -68,7 +70,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     size: 22,
                   ),
                 ),
-                activeColor: Color(0xFFC62828),
+                activeThumbColor: Color(0xFFC62828),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),

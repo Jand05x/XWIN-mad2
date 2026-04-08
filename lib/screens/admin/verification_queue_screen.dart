@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class VerificationQueueScreen extends StatelessWidget {
+  const VerificationQueueScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

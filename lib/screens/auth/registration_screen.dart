@@ -1,6 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class RegistrationScreen extends StatefulWidget {
+  const RegistrationScreen({super.key});
+
   @override
   _RegistrationScreenState createState() => _RegistrationScreenState();
 }
@@ -101,7 +105,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: DropdownButtonFormField<String>(
-                    value: selectedBloodType,
+                    initialValue: selectedBloodType,
                     decoration: InputDecoration(
                       border: InputBorder.none,
                       icon: Icon(
@@ -282,9 +286,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   }
 
   void _handleRegister() async {
-    if (nameController.text.isEmpty ||
-        emailController.text.isEmpty ||
-        phoneController.text.isEmpty ||
+    // Validate all fields are filled
+    if (nameController.text.trim().isEmpty ||
+        emailController.text.trim().isEmpty ||
+        phoneController.text.trim().isEmpty ||
         selectedBloodType == null ||
         passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -299,22 +304,97 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       return;
     }
 
-    setState(() => isLoading = true);
-    await Future.delayed(Duration(seconds: 1));
-    setState(() => isLoading = false);
-
-    if (mounted) {
+    if (passwordController.text.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Account created successfully!'),
-          backgroundColor: Color(0xFF2E7D32),
+          content: Text('Password must be at least 6 characters'),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
         ),
       );
-      Navigator.pushReplacementNamed(context, '/home');
+      return;
+    }
+
+    setState(() => isLoading = true);
+
+    try {
+      // Step 1: Create the account in Firebase Auth
+      UserCredential userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+            email: emailController.text.trim(),
+            password: passwordController.text,
+          );
+
+      // Step 2: Save extra user info to Firestore under 'users' collection
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .set({
+            'name': nameController.text.trim(),
+            'email': emailController.text.trim(),
+            'phone': phoneController.text.trim(),
+            'bloodType': selectedBloodType,
+            'role': 'donor',
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+
+      if (mounted) {
+        setState(() => isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Account created successfully!'),
+            backgroundColor: Color(0xFF2E7D32),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+        Navigator.pushReplacementNamed(context, '/home');
+      }
+    } on FirebaseAuthException catch (e) {
+      setState(() => isLoading = false);
+
+      String message = 'Registration failed. Please try again.';
+
+      if (e.code == 'email-already-in-use') {
+        message = 'An account already exists with this email.';
+      } else if (e.code == 'weak-password') {
+        message = 'Password must be at least 6 characters.';
+      } else if (e.code == 'invalid-email') {
+        message = 'The email address is not valid.';
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Color(0xFFC62828),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() => isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Error: ${e.toString()}',
+            ), // <-- shows real error on screen
+            backgroundColor: Color(0xFFC62828),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
     }
   }
 

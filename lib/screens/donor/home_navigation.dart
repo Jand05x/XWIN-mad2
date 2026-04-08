@@ -4,6 +4,8 @@ import 'account_screen.dart';
 import 'settings_screen.dart';
 
 class HomeNavigation extends StatefulWidget {
+  const HomeNavigation({super.key});
+
   @override
   _HomeNavigationState createState() => _HomeNavigationState();
 }

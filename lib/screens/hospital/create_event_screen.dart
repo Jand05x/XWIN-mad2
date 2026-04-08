@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class CreateEventScreen extends StatefulWidget {
+  const CreateEventScreen({super.key});
+
   @override
   _CreateEventScreenState createState() => _CreateEventScreenState();
 }
