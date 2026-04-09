@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class PostBloodRequestScreen extends StatefulWidget {
@@ -9,8 +11,10 @@ class PostBloodRequestScreen extends StatefulWidget {
 
 class _PostBloodRequestScreenState extends State<PostBloodRequestScreen> {
   final TextEditingController unitsController = TextEditingController();
+  final TextEditingController hospitalController = TextEditingController();
   String? selectedBloodType;
   String? selectedUrgency;
+  bool isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -104,6 +108,41 @@ class _PostBloodRequestScreenState extends State<PostBloodRequestScreen> {
 
             SizedBox(height: 18),
 
+            _buildLabel('Hospital Name'),
+            SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: hospitalController,
+                decoration: InputDecoration(
+                  hintText: 'Enter hospital name',
+                  hintStyle: TextStyle(color: Color(0xFFBDBDBD), fontSize: 15),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 16,
+                  ),
+                  prefixIcon: Icon(
+                    Icons.local_hospital_outlined,
+                    color: Color(0xFF8E8E93),
+                    size: 22,
+                  ),
+                ),
+              ),
+            ),
+
+            SizedBox(height: 18),
+
             _buildLabel('Number of Units'),
             SizedBox(height: 8),
             Container(
@@ -190,11 +229,23 @@ class _PostBloodRequestScreenState extends State<PostBloodRequestScreen> {
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                onPressed: _submitRequest,
-                child: Text(
-                  'Post Request',
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
-                ),
+                onPressed: isLoading ? null : _submitRequest,
+                child: isLoading
+                    ? SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.5,
+                        ),
+                      )
+                    : Text(
+                        'Post Request',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
               ),
             ),
           ],
@@ -214,9 +265,11 @@ class _PostBloodRequestScreenState extends State<PostBloodRequestScreen> {
     );
   }
 
-  void _submitRequest() {
+  void _submitRequest() async {
+    // Validate all fields
     if (selectedBloodType == null ||
-        unitsController.text.isEmpty ||
+        hospitalController.text.trim().isEmpty ||
+        unitsController.text.trim().isEmpty ||
         selectedUrgency == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -229,20 +282,55 @@ class _PostBloodRequestScreenState extends State<PostBloodRequestScreen> {
       );
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Request posted successfully!'),
-        backgroundColor: Color(0xFF2E7D32),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
-    Navigator.pop(context);
+
+    setState(() => isLoading = true);
+
+    try {
+      // Write the request to Firestore blood_requests collection
+      await FirebaseFirestore.instance.collection('blood_requests').add({
+        'bloodType': selectedBloodType,
+        'hospital': hospitalController.text.trim(),
+        'units': unitsController.text.trim(),
+        'urgency': selectedUrgency,
+        'postedBy': FirebaseAuth.instance.currentUser?.uid ?? 'unknown',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      if (mounted) {
+        setState(() => isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Request posted successfully!'),
+            backgroundColor: Color(0xFF2E7D32),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      setState(() => isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to post request. Please try again.'),
+            backgroundColor: Color(0xFFC62828),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    }
   }
 
   @override
   void dispose() {
     unitsController.dispose();
+    hospitalController.dispose();
     super.dispose();
   }
 }

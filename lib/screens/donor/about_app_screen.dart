@@ -132,8 +132,11 @@ class AboutAppScreen extends StatelessWidget {
 
             SizedBox(height: 30),
 
+            // Fixed: was showing broken characters like Â© and â¤ï¸
+            // Now using proper Unicode © and ❤️
             Text(
-              '2025 XwinLink. All rights reserved.',
+              '© 2025 XwinLink. Made with ❤️ to save lives.',
+              textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12, color: Color(0xFFBDBDBD)),
             ),
 

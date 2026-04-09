@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -9,6 +10,27 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   bool notificationsEnabled = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings(); // Load saved preference when screen opens
+  }
+
+  // Load the saved notification toggle value from device storage
+  Future<void> _loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      // Default to true if never saved before
+      notificationsEnabled = prefs.getBool('notifications_enabled') ?? true;
+    });
+  }
+
+  // Save the notification toggle value to device storage
+  Future<void> _saveNotificationSetting(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('notifications_enabled', value);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,8 +69,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               child: SwitchListTile(
                 value: notificationsEnabled,
-                onChanged: (value) =>
-                    setState(() => notificationsEnabled = value),
+                onChanged: (value) {
+                  setState(() => notificationsEnabled = value);
+                  _saveNotificationSetting(value); // Persist to device
+                },
                 title: Text(
                   'Notifications',
                   style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),

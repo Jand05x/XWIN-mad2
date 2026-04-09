@@ -74,6 +74,69 @@ class DashboardScreen extends StatelessWidget {
                         ),
                       ],
                     ),
+                    SizedBox(height: 20),
+
+                    // Eligibility check card — fixed broken checkmarks (âœ" → ✓)
+                    GestureDetector(
+                      onTap: () => _showEligibilityDialog(context),
+                      child: Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          color: Color(0xFFE8F5E9),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Color(0xFF2E7D32).withOpacity(0.3),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: Color(0xFF2E7D32).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                Icons.checklist_rounded,
+                                color: Color(0xFF2E7D32),
+                                size: 24,
+                              ),
+                            ),
+                            SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Check Eligibility',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF1A1A2E),
+                                    ),
+                                  ),
+                                  Text(
+                                    'Are you ready to donate?',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF8E8E93),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 16,
+                              color: Color(0xFF2E7D32),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
                     SizedBox(height: 30),
                     Text(
                       'Quick Actions',
@@ -114,6 +177,86 @@ class DashboardScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // Fixed: was using broken characters âœ" — now uses proper ✓ checkmarks
+  void _showEligibilityDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Row(
+          children: [
+            Icon(Icons.checklist_rounded, color: Color(0xFF2E7D32), size: 24),
+            SizedBox(width: 8),
+            Text(
+              'Eligibility Checklist',
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 17),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'You may donate blood if you:',
+              style: TextStyle(
+                color: Color(0xFF8E8E93),
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            SizedBox(height: 12),
+            // All checkmarks use the proper ✓ Unicode character
+            _buildCheckItem('Are at least 18 years old'),
+            _buildCheckItem('Weigh at least 50 kg'),
+            _buildCheckItem('Have not donated in the last 3 months'),
+            _buildCheckItem('Are in good general health'),
+            _buildCheckItem('Have not had a fever in the last 2 weeks'),
+            _buildCheckItem('Are not currently on antibiotics'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Got it',
+              style: TextStyle(
+                color: Color(0xFF2E7D32),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Uses the correct ✓ character — no broken encoding
+  Widget _buildCheckItem(String text) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '✓ ', // proper Unicode checkmark
+            style: TextStyle(
+              color: Color(0xFF2E7D32),
+              fontWeight: FontWeight.w700,
+              fontSize: 15,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(fontSize: 14, color: Color(0xFF333333)),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -1,8 +1,134 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class AccountScreen extends StatelessWidget {
+class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
+
+  @override
+  _AccountScreenState createState() => _AccountScreenState();
+}
+
+class _AccountScreenState extends State<AccountScreen> {
+  String displayName = '';
+  String displayEmail = '';
+  String displayPhone = '';
+  String displayBloodType = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  // Load saved profile data from device storage
+  Future<void> _loadProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    final user = FirebaseAuth.instance.currentUser;
+
+    setState(() {
+      displayName = prefs.getString('profile_name') ?? 'User';
+      displayEmail = prefs.getString('profile_email') ?? user?.email ?? '';
+      displayPhone = prefs.getString('profile_phone') ?? '';
+      displayBloodType = prefs.getString('profile_blood_type') ?? '';
+    });
+  }
+
+  // Save updated profile info to SharedPreferences
+  Future<void> _saveProfile(
+    String name,
+    String email,
+    String phone,
+    String bloodType,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('profile_name', name);
+    await prefs.setString('profile_email', email);
+    await prefs.setString('profile_phone', phone);
+    await prefs.setString('profile_blood_type', bloodType);
+  }
+
+  void _showEditDialog() {
+    final nameCtrl = TextEditingController(text: displayName);
+    final emailCtrl = TextEditingController(text: displayEmail);
+    final phoneCtrl = TextEditingController(text: displayPhone);
+    final bloodCtrl = TextEditingController(text: displayBloodType);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Text(
+          'Edit Profile',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildEditField('Name', nameCtrl, Icons.person_outline),
+              SizedBox(height: 12),
+              _buildEditField('Email', emailCtrl, Icons.mail_outline),
+              SizedBox(height: 12),
+              _buildEditField('Phone', phoneCtrl, Icons.phone_outlined),
+              SizedBox(height: 12),
+              _buildEditField(
+                'Blood Type',
+                bloodCtrl,
+                Icons.water_drop_outlined,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: TextStyle(color: Color(0xFF8E8E93))),
+          ),
+          TextButton(
+            onPressed: () async {
+              await _saveProfile(
+                nameCtrl.text.trim(),
+                emailCtrl.text.trim(),
+                phoneCtrl.text.trim(),
+                bloodCtrl.text.trim(),
+              );
+              setState(() {
+                displayName = nameCtrl.text.trim();
+                displayEmail = emailCtrl.text.trim();
+                displayPhone = phoneCtrl.text.trim();
+                displayBloodType = bloodCtrl.text.trim();
+              });
+              if (context.mounted) Navigator.pop(context);
+            },
+            child: Text(
+              'Save',
+              style: TextStyle(
+                color: Color(0xFFC62828),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEditField(
+    String label,
+    TextEditingController controller,
+    IconData icon,
+  ) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, size: 20, color: Color(0xFF8E8E93)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,24 +157,52 @@ class AccountScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    Container(
-                      width: 90,
-                      height: 90,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFFC62828), Color(0xFFE53935)],
+                    Stack(
+                      children: [
+                        Container(
+                          width: 90,
+                          height: 90,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Color(0xFFC62828), Color(0xFFE53935)],
+                            ),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.person_rounded,
+                            size: 44,
+                            color: Colors.white,
+                          ),
                         ),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.person_rounded,
-                        size: 44,
-                        color: Colors.white,
-                      ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: GestureDetector(
+                            onTap: _showEditDialog,
+                            child: Container(
+                              width: 28,
+                              height: 28,
+                              decoration: BoxDecoration(
+                                color: Color(0xFFC62828),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 2,
+                                ),
+                              ),
+                              child: Icon(
+                                Icons.edit,
+                                size: 14,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     SizedBox(height: 16),
                     Text(
-                      'Ahmed Ali',
+                      displayName.isNotEmpty ? displayName : 'User',
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
@@ -57,7 +211,7 @@ class AccountScreen extends StatelessWidget {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'ahmed@email.com',
+                      displayEmail,
                       style: TextStyle(fontSize: 14, color: Color(0xFF8E8E93)),
                     ),
                   ],
@@ -71,14 +225,27 @@ class AccountScreen extends StatelessWidget {
                     _buildInfoRow(
                       Icons.phone_rounded,
                       'Phone',
-                      '0770 123 4567',
+                      displayPhone.isNotEmpty ? displayPhone : 'Not set',
                     ),
-                    _buildInfoRow(Icons.water_drop_rounded, 'Blood Type', 'A+'),
+                    _buildInfoRow(
+                      Icons.water_drop_rounded,
+                      'Blood Type',
+                      displayBloodType.isNotEmpty
+                          ? displayBloodType
+                          : 'Not set',
+                    ),
                     _buildInfoRow(Icons.star_rounded, 'Points', '240'),
                     _buildInfoRow(Icons.favorite_rounded, 'Donations', '12'),
 
                     SizedBox(height: 20),
 
+                    _buildButton(
+                      'Edit Profile',
+                      Icons.edit_outlined,
+                      Color(0xFF1565C0),
+                      () => _showEditDialog(),
+                    ),
+                    SizedBox(height: 10),
                     _buildButton(
                       'Change Password',
                       Icons.lock_outline_rounded,
@@ -210,15 +377,10 @@ class AccountScreen extends StatelessWidget {
   }
 
   void _handleLogout(BuildContext context) async {
-    // Close the dialog first
     Navigator.pop(context);
-
     try {
-      // Real Firebase sign out
       await FirebaseAuth.instance.signOut();
-
       if (context.mounted) {
-        // Go back to welcome screen and clear the entire navigation stack
         Navigator.pushReplacementNamed(context, '/welcome');
       }
     } catch (e) {

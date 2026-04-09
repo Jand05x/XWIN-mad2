@@ -384,9 +384,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              'Error: ${e.toString()}',
-            ), // <-- shows real error on screen
+            content: Text('Something went wrong. Please try again.'),
             backgroundColor: Color(0xFFC62828),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(

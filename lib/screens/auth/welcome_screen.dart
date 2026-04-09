@@ -34,8 +34,9 @@ class WelcomeScreen extends StatelessWidget {
                     ),
                   ),
                   child: Center(
+                    // Fixed: was Icons.navigation, now uses bloodtype icon
                     child: Icon(
-                      Icons.water_drop_rounded,
+                      Icons.bloodtype_rounded,
                       size: 65,
                       color: Colors.white,
                     ),
