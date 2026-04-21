@@ -1,4 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ViewDonorsScreen extends StatelessWidget {
   const ViewDonorsScreen({super.key});
@@ -6,38 +8,85 @@ class ViewDonorsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF8F9FA),
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: Text('Registered Donors'),
+        title: const Text('Registered Donors'),
         backgroundColor: Colors.white,
-        foregroundColor: Color(0xFF1A1A2E),
+        foregroundColor: const Color(0xFF1A1A2E),
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: ListView(
-        padding: EdgeInsets.all(20),
-        children: [
-          _buildDonorCard('Ahmed Ali', 'A+', '0770 123 4567', true),
-          _buildDonorCard('Sara Mohammed', 'O+', '0750 987 6543', true),
-          _buildDonorCard('Jand Ayoub', 'B+', '0780 456 7890', false),
-          _buildDonorCard('Layla Hassan', 'AB+', '0760 321 9876', true),
-        ],
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('users')
+            .where('role', isEqualTo: 'donor')
+            .where('status', isEqualTo: 'verified')
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.error_outline, color: Color(0xFFC62828), size: 48),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Failed to load donors.\n${snapshot.error}',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Color(0xFF8E8E93)),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(color: Color(0xFFC62828)),
+            );
+          }
+
+          final donors = snapshot.data?.docs ?? [];
+
+          if (donors.isEmpty) {
+            return const Center(
+              child: Text(
+                'No verified donors yet.',
+                style: TextStyle(color: Color(0xFF8E8E93)),
+              ),
+            );
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(20),
+            itemCount: donors.length,
+            itemBuilder: (context, index) {
+              final data = donors[index].data() as Map<String, dynamic>;
+              final name = data['name'] ?? 'Unknown';
+              final bloodType = data['bloodType'] ?? '?';
+              final phone = data['phone'] ?? '';
+              final isAvailable = data['isAvailable'] ?? true;
+              return _buildDonorCard(context, name, bloodType, phone, isAvailable);
+            },
+          );
+        },
       ),
     );
   }
 
   Widget _buildDonorCard(
+    BuildContext context,
     String name,
     String bloodType,
     String phone,
     bool isAvailable,
   ) {
     return Container(
-      margin: EdgeInsets.only(bottom: 12),
-      padding: EdgeInsets.all(18),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -45,7 +94,7 @@ class ViewDonorsScreen extends StatelessWidget {
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
             blurRadius: 12,
-            offset: Offset(0, 3),
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -57,55 +106,55 @@ class ViewDonorsScreen extends StatelessWidget {
                 width: 52,
                 height: 52,
                 decoration: BoxDecoration(
-                  color: Color(0xFFF5F5F5),
+                  color: const Color(0xFFF5F5F5),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(
+                child: const Icon(
                   Icons.person_rounded,
                   size: 28,
                   color: Color(0xFF8E8E93),
                 ),
               ),
-              SizedBox(width: 14),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       name,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF1A1A2E),
                       ),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Row(
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.water_drop_rounded,
                           size: 14,
                           color: Color(0xFFC62828),
                         ),
-                        SizedBox(width: 4),
+                        const SizedBox(width: 4),
                         Text(
                           bloodType,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                             color: Color(0xFFC62828),
                           ),
                         ),
-                        SizedBox(width: 12),
-                        Icon(
+                        const SizedBox(width: 12),
+                        const Icon(
                           Icons.phone_outlined,
                           size: 14,
                           color: Color(0xFF8E8E93),
                         ),
-                        SizedBox(width: 4),
+                        const SizedBox(width: 4),
                         Text(
-                          phone,
-                          style: TextStyle(
+                          phone.isNotEmpty ? phone : 'No phone',
+                          style: const TextStyle(
                             fontSize: 13,
                             color: Color(0xFF8E8E93),
                           ),
@@ -116,9 +165,9 @@ class ViewDonorsScreen extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: isAvailable ? Color(0xFFE8F5E9) : Color(0xFFF5F5F5),
+                  color: isAvailable ? const Color(0xFFE8F5E9) : const Color(0xFFF5F5F5),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -126,35 +175,68 @@ class ViewDonorsScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: isAvailable ? Color(0xFF2E7D32) : Color(0xFF8E8E93),
+                    color: isAvailable ? const Color(0xFF2E7D32) : const Color(0xFF8E8E93),
                   ),
                 ),
               ),
             ],
           ),
 
-          SizedBox(height: 14),
+          const SizedBox(height: 14),
 
           SizedBox(
             width: double.infinity,
             height: 44,
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: isAvailable
-                    ? Color(0xFFC62828)
-                    : Color(0xFFE0E0E0),
-                foregroundColor: isAvailable ? Colors.white : Color(0xFF8E8E93),
+                backgroundColor: isAvailable ? const Color(0xFFC62828) : const Color(0xFFE0E0E0),
+                foregroundColor: isAvailable ? Colors.white : const Color(0xFF8E8E93),
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              icon: Icon(Icons.call_rounded, size: 18),
-              label: Text(
+              icon: const Icon(Icons.call_rounded, size: 18),
+              label: const Text(
                 'Contact Donor',
                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
               ),
-              onPressed: isAvailable ? () {} : null,
+              onPressed: isAvailable && phone.isNotEmpty
+                  ? () async {
+                      final uri = Uri(scheme: 'tel', path: phone);
+                      try {
+                        if (await canLaunchUrl(uri)) {
+                          await launchUrl(uri);
+                        } else {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Could not call $phone'),
+                                backgroundColor: const Color(0xFFC62828),
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            );
+                          }
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Error: $e'),
+                              backgroundColor: const Color(0xFFC62828),
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          );
+                        }
+                      }
+                    }
+                  : null,
             ),
           ),
         ],
