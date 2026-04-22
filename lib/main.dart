@@ -1,6 +1,7 @@
 // Updated by Fatima - Final Version222
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'firebase_options.dart';
 import 'Auth.gate.dart';
 import 'screens/auth/welcome_screen.dart';
 import 'screens/auth/login_screen.dart';
@@ -24,7 +25,9 @@ import 'screens/admin/verification_queue_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(MyApp());
 }
 
@@ -62,10 +65,9 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      // '/' now points to AuthGate which decides where to go automatically
       initialRoute: '/',
       routes: {
-        '/': (context) => AuthGate(), // <-- NEW: checks login state
+        '/': (context) => AuthGate(),
         '/welcome': (context) => WelcomeScreen(),
         '/login': (context) => LoginScreen(),
         '/register': (context) => RegistrationScreen(),
