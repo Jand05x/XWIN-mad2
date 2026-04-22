@@ -9,105 +9,206 @@ class NotificationsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
-      appBar: AppBar(
-        title: const Text('Notifications'),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1A1A2E),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => _clearAll(context),
-            child: const Text(
-              'Clear All',
-              style: TextStyle(
-                color: Color(0xFFC62828),
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-              ),
-            ),
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8F9FA),
+        appBar: AppBar(
+          title: const Text('Activity'),
+          backgroundColor: Colors.white,
+          foregroundColor: const Color(0xFF1A1A2E),
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+            onPressed: () => Navigator.pop(context),
           ),
-        ],
+          bottom: const TabBar(
+            labelColor: Color(0xFFC62828),
+            unselectedLabelColor: Color(0xFF8E8E93),
+            indicatorColor: Color(0xFFC62828),
+            tabs: [
+              Tab(text: 'Blood Requests'),
+              Tab(text: 'Events'),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            _buildBloodRequestsList(),
+            _buildEventsList(),
+          ],
+        ),
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('notifications')
-            .where('userId', isEqualTo: _uid)
-            .orderBy('createdAt', descending: true)
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+    );
+  }
+
+  Widget _buildBloodRequestsList() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('blood_requests')
+          .orderBy('createdAt', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return const Center(
+            child: Text('Could not load requests',
+                style: TextStyle(color: Color(0xFF8E8E93))),
+          );
+        }
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+              child: CircularProgressIndicator(color: Color(0xFFC62828)));
+        }
+        final docs = snapshot.data?.docs ?? [];
+        if (docs.isEmpty) {
+          return const Center(
+              child: Text('No blood requests yet.',
+                  style: TextStyle(color: Color(0xFF8E8E93))));
+        }
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: docs.length,
+          itemBuilder: (context, index) {
+            final data = docs[index].data() as Map<String, dynamic>;
+            final bloodType = data['bloodType'] ?? '?';
+            final hospital = data['hospital'] ?? 'Unknown';
+            final urgency = data['urgency'] ?? '';
+            final units = data['units'] ?? '';
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
                 children: [
-                  const Icon(Icons.error_outline, color: Color(0xFFC62828), size: 48),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Failed to load notifications.\n${snapshot.error}',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Color(0xFF8E8E93)),
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFC62828).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.water_drop_rounded,
+                        color: Color(0xFFC62828), size: 24),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('$bloodType needed at $hospital',
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                                color: Color(0xFF1A1A2E))),
+                        const SizedBox(height: 4),
+                        Text('$urgency${units.isNotEmpty ? ' • $units units' : ''}',
+                            style: const TextStyle(
+                                fontSize: 13, color: Color(0xFF8E8E93))),
+                      ],
+                    ),
                   ),
                 ],
               ),
             );
-          }
+          },
+        );
+      },
+    );
+  }
 
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: Color(0xFFC62828)),
-            );
-          }
-
-          final docs = snapshot.data?.docs ?? [];
-
-          if (docs.isEmpty) {
-            return const Center(
-              child: Text(
-                'No notifications yet.',
-                style: TextStyle(color: Color(0xFF8E8E93)),
+  Widget _buildEventsList() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('events')
+          .orderBy('createdAt', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return const Center(
+              child: Text('Could not load events',
+                  style: TextStyle(color: Color(0xFF8E8E93))));
+        }
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+              child: CircularProgressIndicator(color: Color(0xFF1565C0)));
+        }
+        final docs = snapshot.data?.docs ?? [];
+        if (docs.isEmpty) {
+          return const Center(
+              child: Text('No events yet.',
+                  style: TextStyle(color: Color(0xFF8E8E93))));
+        }
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: docs.length,
+          itemBuilder: (context, index) {
+            final data = docs[index].data() as Map<String, dynamic>;
+            final title = data['title'] ?? 'Event';
+            final location = data['location'] ?? '';
+            final date = data['date'] ?? '';
+            final attendees = data['attendees'] ?? 0;
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1565C0).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.event_rounded,
+                        color: Color(0xFF1565C0), size: 24),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(title,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                                color: Color(0xFF1A1A2E))),
+                        const SizedBox(height: 4),
+                        Text('$location • $date',
+                            style: const TextStyle(
+                                fontSize: 13, color: Color(0xFF8E8E93))),
+                        Text('$attendees registered',
+                            style: const TextStyle(
+                                fontSize: 12, color: Color(0xFF2E7D32))),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(20),
-            itemCount: docs.length,
-            itemBuilder: (context, index) {
-              final data = docs[index].data() as Map<String, dynamic>;
-              final title = data['title'] ?? '';
-              final message = data['message'] ?? '';
-              final isRead = data['isRead'] ?? false;
-              final type = data['type'] ?? 'info';
-              final requestId = data['requestId'] as String?;
-              final createdAt = data['createdAt'] as Timestamp?;
-              final timeStr = createdAt != null
-                  ? _timeAgo(createdAt.toDate())
-                  : '';
-
-              final iconData = _iconForType(type);
-              final color = _colorForType(type);
-
-              return _buildNotification(
-                context,
-                docId: docs[index].id,
-                title: title,
-                message: message,
-                time: timeStr,
-                icon: iconData,
-                color: color,
-                isRead: isRead,
-                requestId: requestId,
-              );
-            },
-          );
-        },
-      ),
+          },
+        );
+      },
     );
   }
 

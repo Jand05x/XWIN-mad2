@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class BloodRequestsScreen extends StatelessWidget {
@@ -230,18 +231,7 @@ class BloodRequestsScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Thank you for volunteering!'),
-                          backgroundColor: Color(0xFF2E7D32),
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      );
-                    },
+                    onPressed: () => _handleDonate(context, docId, bloodType),
                     child: Text(
                       'Donate Now',
                       style: TextStyle(
@@ -252,27 +242,6 @@ class BloodRequestsScreen extends StatelessWidget {
                   ),
                 ),
               ),
-
-              SizedBox(width: 10),
-
-              // Delete / Resolve button
-              SizedBox(
-                height: 46,
-                width: 46,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFFF5F5F5),
-                    foregroundColor: Color(0xFFC62828),
-                    elevation: 0,
-                    padding: EdgeInsets.zero,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onPressed: () => _confirmDelete(context, docId, bloodType),
-                  child: Icon(Icons.delete_outline_rounded, size: 22),
-                ),
-              ),
             ],
           ),
         ],
@@ -280,67 +249,51 @@ class BloodRequestsScreen extends StatelessWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context, String docId, String bloodType) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: Text(
-          'Remove Request',
-          style: TextStyle(fontWeight: FontWeight.w700),
-        ),
-        content: Text('Mark the $bloodType request as resolved and remove it?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: Color(0xFF8E8E93))),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              try {
-                await FirebaseFirestore.instance
-                    .collection('blood_requests')
-                    .doc(docId)
-                    .delete();
+  void _handleDonate(BuildContext context, String docId, String bloodType) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
 
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Request resolved and removed.'),
-                      backgroundColor: Color(0xFF2E7D32),
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  );
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Failed to remove request.'),
-                      backgroundColor: Color(0xFFC62828),
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  );
-                }
-              }
-            },
-            child: Text(
-              'Resolve',
-              style: TextStyle(
-                color: Color(0xFFC62828),
-                fontWeight: FontWeight.w700,
-              ),
+    try {
+      // Track the donor's response
+      await FirebaseFirestore.instance
+          .collection('blood_requests')
+          .doc(docId)
+          .update({
+        'responders': FieldValue.arrayUnion([user.uid]),
+      });
+
+      // Increment donor's points and donations
+      final userDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
+      await userDoc.update({
+        'points': FieldValue.increment(10),
+        'donations': FieldValue.increment(1),
+      });
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Thank you for volunteering! +10 points'),
+            backgroundColor: Color(0xFF2E7D32),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
             ),
           ),
-        ],
-      ),
-    );
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to respond. Please try again.'),
+            backgroundColor: Color(0xFFC62828),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    }
   }
 }

@@ -38,9 +38,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   stream: FirebaseFirestore.instance
                       .collection('users')
                       .where('role', isEqualTo: 'donor')
-                      .where('status', isEqualTo: 'pending')
                       .snapshots(),
-                  label: 'Pending Donors',
+                  label: 'Total Donors',
                   icon: Icons.people_rounded,
                   color: const Color(0xFFF57C00),
                 ),
@@ -73,14 +72,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
           const SizedBox(height: 14),
 
-          _buildActionTile(
-            context,
-            title: 'Verify Donors',
-            subtitle: 'Review pending donor applications',
-            icon: Icons.verified_user_rounded,
-            color: const Color(0xFFF57C00),
-            onTap: () => Navigator.pushNamed(context, '/verify'),
-          ),
           _buildActionTile(
             context,
             title: 'Manage Hospitals',
@@ -210,11 +201,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         icon: Icons.water_drop_rounded,
         color: const Color(0xFFC62828),
         stream: FirebaseFirestore.instance
-            .collection('bloodRequests')
+            .collection('blood_requests')
             .orderBy('createdAt', descending: true)
             .snapshots(),
         itemBuilder: (data) =>
-            '${data['bloodType'] ?? '?'} — ${data['hospitalName'] ?? 'Unknown'} (${data['status'] ?? ''})',
+            '${data['bloodType'] ?? '?'} — ${data['hospital'] ?? 'Unknown'} (${data['urgency'] ?? ''})',
       ),
     );
   }
@@ -231,7 +222,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             .orderBy('createdAt', descending: true)
             .snapshots(),
         itemBuilder: (data) =>
-            '${data['title'] ?? 'Event'} — ${data['hospitalName'] ?? 'Unknown'}',
+            '${data['title'] ?? 'Event'} — ${data['location'] ?? 'Unknown'}',
       ),
     );
   }
@@ -278,16 +269,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
             const SizedBox(height: 10),
             _buildStatRow(
-              'Verified Donors',
-              FirebaseFirestore.instance
-                  .collection('users')
-                  .where('role', isEqualTo: 'donor')
-                  .where('status', isEqualTo: 'verified')
-                  .snapshots(),
-              const Color(0xFF2E7D32),
-            ),
-            const SizedBox(height: 10),
-            _buildStatRow(
               'Total Hospitals',
               FirebaseFirestore.instance
                   .collection('users')
@@ -297,10 +278,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
             const SizedBox(height: 10),
             _buildStatRow(
-              'Active Blood Requests',
+              'Blood Requests',
               FirebaseFirestore.instance
-                  .collection('bloodRequests')
-                  .where('status', isEqualTo: 'active')
+                  .collection('blood_requests')
                   .snapshots(),
               const Color(0xFFF57C00),
             ),

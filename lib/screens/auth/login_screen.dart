@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,7 +14,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController passwordController = TextEditingController();
   bool isLoading = false;
   bool obscurePassword = true;
-  String selectedRole = 'donor'; // 'donor', 'hospital', 'admin'
 
   @override
   Widget build(BuildContext context) {
@@ -67,12 +67,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     fontWeight: FontWeight.w400,
                   ),
                 ),
-
-                SizedBox(height: 36),
-
-                _buildLabel('Select Your Role'),
-                SizedBox(height: 12),
-                _buildRoleSelector(),
 
                 SizedBox(height: 36),
 
@@ -191,77 +185,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildRoleSelector() {
-    return Row(
-      children: [
-        _buildRoleCard(
-          role: 'donor',
-          label: 'Donor',
-          icon: Icons.bloodtype_rounded,
-          color: Color(0xFFC62828),
-        ),
-        SizedBox(width: 12),
-        _buildRoleCard(
-          role: 'hospital',
-          label: 'Hospital',
-          icon: Icons.local_hospital_rounded,
-          color: Color(0xFF1565C0),
-        ),
-        SizedBox(width: 12),
-        _buildRoleCard(
-          role: 'admin',
-          label: 'Admin',
-          icon: Icons.admin_panel_settings_rounded,
-          color: Color(0xFF6A1B9A),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildRoleCard({
-    required String role,
-    required String label,
-    required IconData icon,
-    required Color color,
-  }) {
-    bool isSelected = selectedRole == role;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => selectedRole = role),
-        child: Container(
-          padding: EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            color: isSelected ? color.withOpacity(0.08) : Color(0xFFF5F5F5),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: isSelected ? color : Colors.transparent,
-              width: 2,
-            ),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 28,
-                color: isSelected ? color : Color(0xFF8E8E93),
-              ),
-              SizedBox(height: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: isSelected ? color : Color(0xFF8E8E93),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildLabel(String text) {
     return Text(
       text,
@@ -297,7 +220,6 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _handleLogin() async {
-    // Basic empty field checks
     if (emailController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -327,26 +249,49 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => isLoading = true);
 
     try {
-      // Real Firebase Auth sign in
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text,
       );
 
-      // If we get here, login was successful
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user == null) throw Exception('User not found');
+
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (!userDoc.exists) {
+        await FirebaseAuth.instance.signOut();
+        setState(() => isLoading = false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Account not found. Please register.'),
+              backgroundColor: Color(0xFFC62828),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+        }
+        return;
+      }
+
+      String role = userDoc.get('role') ?? 'donor';
+
       if (mounted) {
         setState(() => isLoading = false);
 
-        String route = '';
-        switch (selectedRole) {
-          case 'hospital':
-            route = '/hospital_dashboard';
-            break;
-          case 'admin':
-            route = '/admin_dashboard';
-            break;
-          default:
-            route = '/home';
+        String route;
+        if (role == 'hospital') {
+          route = '/hospital_dashboard';
+        } else if (role == 'admin') {
+          route = '/admin_dashboard';
+        } else {
+          route = '/home';
         }
         Navigator.pushReplacementNamed(context, route);
       }

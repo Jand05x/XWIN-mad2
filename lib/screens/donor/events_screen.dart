@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class EventsScreen extends StatelessWidget {
@@ -218,16 +219,24 @@ class EventsScreen extends StatelessWidget {
   }
 
   void _handleRsvp(BuildContext context, String docId) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
     try {
-      // Increment the attendees count by 1 in Firestore atomically
+      // Increment the attendees count
       await FirebaseFirestore.instance.collection('events').doc(docId).update({
         'attendees': FieldValue.increment(1),
+      });
+
+      // Add points for attending event
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+        'points': FieldValue.increment(5),
       });
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('RSVP confirmed! See you there.'),
+            content: Text('RSVP confirmed! +5 points'),
             backgroundColor: Color(0xFF2E7D32),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(

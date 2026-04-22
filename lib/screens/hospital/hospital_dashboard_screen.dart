@@ -39,9 +39,8 @@ class _HospitalDashboardScreenState extends State<HospitalDashboardScreen> {
               Expanded(
                 child: _buildLiveStatCard(
                   stream: FirebaseFirestore.instance
-                      .collection('bloodRequests')
-                      .where('hospitalId', isEqualTo: _uid)
-                      .where('status', isEqualTo: 'active')
+                      .collection('blood_requests')
+                      .where('postedBy', isEqualTo: _uid)
                       .snapshots(),
                   label: 'Active Requests',
                   icon: Icons.water_drop_rounded,
@@ -53,7 +52,7 @@ class _HospitalDashboardScreenState extends State<HospitalDashboardScreen> {
                 child: _buildLiveStatCard(
                   stream: FirebaseFirestore.instance
                       .collection('events')
-                      .where('hospitalId', isEqualTo: _uid)
+                      .where('createdBy', isEqualTo: _uid)
                       .snapshots(),
                   label: 'Events Planned',
                   icon: Icons.event_rounded,

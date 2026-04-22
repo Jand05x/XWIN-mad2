@@ -180,9 +180,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                         const SizedBox(height: 30),
 
-                        // Recent notifications from Firestore
                         const Text(
-                          'Recent Notifications',
+                          'Recent Activity',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -190,7 +189,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        _buildRecentNotifications(),
+                        _buildRecentActivity(),
 
                         const SizedBox(height: 30),
                         const Text(
@@ -238,89 +237,206 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildRecentNotifications() {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('notifications')
-          .where('userId', isEqualTo: _uid)
-          .orderBy('createdAt', descending: true)
-          .limit(3)
-          .snapshots(),
-      builder: (context, snap) {
-        if (snap.hasError) {
-          return Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF3E0),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              'Could not load notifications: ${snap.error}',
-              style: const TextStyle(color: Color(0xFFF57C00), fontSize: 13),
-            ),
-          );
-        }
-
-        if (snap.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: Color(0xFFC62828)));
-        }
-
-        final docs = snap.data?.docs ?? [];
-
-        if (docs.isEmpty) {
-          return const Text(
-            'No recent notifications.',
-            style: TextStyle(color: Color(0xFF8E8E93), fontSize: 13),
-          );
-        }
-
-        return Column(
-          children: docs.map((doc) {
-            final data = doc.data() as Map<String, dynamic>;
-            final title = data['title'] ?? '';
-            final message = data['message'] ?? '';
-            return Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.notifications_rounded,
-                      size: 18, color: Color(0xFFC62828)),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildRecentActivity() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Blood Requests Near You',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF1A1A2E),
+          ),
+        ),
+        const SizedBox(height: 8),
+        StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('blood_requests')
+              .orderBy('createdAt', descending: true)
+              .limit(3)
+              .snapshots(),
+          builder: (context, snap) {
+            if (snap.hasError) {
+              return const Text('Could not load requests',
+                  style: TextStyle(color: Color(0xFF8E8E93)));
+            }
+            if (snap.connectionState == ConnectionState.waiting) {
+              return const Center(
+                  child: CircularProgressIndicator(color: Color(0xFFC62828)));
+            }
+            final docs = snap.data?.docs ?? [];
+            if (docs.isEmpty) {
+              return Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text('No blood requests yet.',
+                    style: TextStyle(color: Color(0xFF8E8E93))),
+              );
+            }
+            return Column(
+              children: docs.map((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                final bloodType = data['bloodType'] ?? '?';
+                final hospital = data['hospital'] ?? 'Unknown';
+                final urgency = data['urgency'] ?? '';
+                return GestureDetector(
+                  onTap: () => Navigator.pushNamed(context, '/requests'),
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.03),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
                       children: [
-                        Text(title,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                                color: Color(0xFF1A1A2E))),
-                        Text(message,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                                fontSize: 12, color: Color(0xFF8E8E93))),
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFC62828).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.water_drop_rounded,
+                              size: 20, color: Color(0xFFC62828)),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('$bloodType needed at $hospital',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
+                                      color: Color(0xFF1A1A2E))),
+                              Text(urgency,
+                                  style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF8E8E93))),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right_rounded,
+                            size: 18, color: Color(0xFFBDBDBD)),
                       ],
                     ),
                   ),
-                ],
-              ),
+                );
+              }).toList(),
             );
-          }).toList(),
-        );
-      },
+          },
+        ),
+        const SizedBox(height: 20),
+        const Text(
+          'Upcoming Events',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF1A1A2E),
+          ),
+        ),
+        const SizedBox(height: 8),
+        StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('events')
+              .orderBy('createdAt', descending: true)
+              .limit(2)
+              .snapshots(),
+          builder: (context, snap) {
+            if (snap.hasError) {
+              return const Text('Could not load events',
+                  style: TextStyle(color: Color(0xFF8E8E93)));
+            }
+            if (snap.connectionState == ConnectionState.waiting) {
+              return const Center(
+                  child: CircularProgressIndicator(color: Color(0xFF1565C0)));
+            }
+            final docs = snap.data?.docs ?? [];
+            if (docs.isEmpty) {
+              return Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text('No events yet.',
+                    style: TextStyle(color: Color(0xFF8E8E93))),
+              );
+            }
+            return Column(
+              children: docs.map((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                final title = data['title'] ?? 'Event';
+                final location = data['location'] ?? '';
+                final date = data['date'] ?? '';
+                return GestureDetector(
+                  onTap: () => Navigator.pushNamed(context, '/events'),
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.03),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1565C0).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.event_rounded,
+                              size: 20, color: Color(0xFF1565C0)),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(title,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
+                                      color: Color(0xFF1A1A2E))),
+                              Text('$location • $date',
+                                  style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF8E8E93))),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right_rounded,
+                            size: 18, color: Color(0xFFBDBDBD)),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            );
+          },
+        ),
+      ],
     );
   }
 

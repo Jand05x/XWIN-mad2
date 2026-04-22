@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -14,6 +14,8 @@ class _AccountScreenState extends State<AccountScreen> {
   String displayEmail = '';
   String displayPhone = '';
   String displayBloodType = '';
+  int displayPoints = 0;
+  int displayDonations = 0;
 
   @override
   void initState() {
@@ -21,31 +23,53 @@ class _AccountScreenState extends State<AccountScreen> {
     _loadProfile();
   }
 
-  // Load saved profile data from device storage
   Future<void> _loadProfile() async {
-    final prefs = await SharedPreferences.getInstance();
     final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
 
-    setState(() {
-      displayName = prefs.getString('profile_name') ?? 'User';
-      displayEmail = prefs.getString('profile_email') ?? user?.email ?? '';
-      displayPhone = prefs.getString('profile_phone') ?? '';
-      displayBloodType = prefs.getString('profile_blood_type') ?? '';
-    });
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        setState(() {
+          displayName = data['name'] ?? 'User';
+          displayEmail = data['email'] ?? user.email ?? '';
+          displayPhone = data['phone'] ?? '';
+          displayBloodType = data['bloodType'] ?? '';
+          displayPoints = data['points'] ?? 0;
+          displayDonations = data['donations'] ?? 0;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        displayName = 'User';
+        displayEmail = user.email ?? '';
+      });
+    }
   }
 
-  // Save updated profile info to SharedPreferences
   Future<void> _saveProfile(
     String name,
     String email,
     String phone,
     String bloodType,
   ) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('profile_name', name);
-    await prefs.setString('profile_email', email);
-    await prefs.setString('profile_phone', phone);
-    await prefs.setString('profile_blood_type', bloodType);
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .update({
+          'name': name,
+          'email': email,
+          'phone': phone,
+          'bloodType': bloodType,
+        });
   }
 
   void _showEditDialog() {
@@ -93,12 +117,7 @@ class _AccountScreenState extends State<AccountScreen> {
                 phoneCtrl.text.trim(),
                 bloodCtrl.text.trim(),
               );
-              setState(() {
-                displayName = nameCtrl.text.trim();
-                displayEmail = emailCtrl.text.trim();
-                displayPhone = phoneCtrl.text.trim();
-                displayBloodType = bloodCtrl.text.trim();
-              });
+              await _loadProfile();
               if (context.mounted) Navigator.pop(context);
             },
             child: Text(
@@ -234,8 +253,8 @@ class _AccountScreenState extends State<AccountScreen> {
                           ? displayBloodType
                           : 'Not set',
                     ),
-                    _buildInfoRow(Icons.star_rounded, 'Points', '240'),
-                    _buildInfoRow(Icons.favorite_rounded, 'Donations', '12'),
+                    _buildInfoRow(Icons.star_rounded, 'Points', displayPoints.toString()),
+                    _buildInfoRow(Icons.favorite_rounded, 'Donations', displayDonations.toString()),
 
                     SizedBox(height: 20),
 

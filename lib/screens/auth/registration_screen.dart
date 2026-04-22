@@ -14,7 +14,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController hospitalNameController = TextEditingController();
+  final TextEditingController hospitalAddressController = TextEditingController();
+  final TextEditingController adminCodeController = TextEditingController();
 
+  String selectedRole = 'donor';
   String? selectedBloodType;
   bool isLoading = false;
   bool obscurePassword = true;
@@ -70,66 +74,122 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
                 SizedBox(height: 36),
 
-                _buildInputField(
-                  'Full Name',
-                  nameController,
-                  Icons.person_outline_rounded,
-                ),
-                SizedBox(height: 16),
-                _buildInputField(
-                  'Email',
-                  emailController,
-                  Icons.mail_outline_rounded,
-                ),
-                SizedBox(height: 16),
-                _buildInputField(
-                  'Phone',
-                  phoneController,
-                  Icons.phone_outlined,
-                ),
-                SizedBox(height: 16),
+                _buildLabel('Select Account Type'),
+                SizedBox(height: 12),
+                _buildRoleSelector(),
 
-                Text(
-                  'Blood Type',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF333333),
+                SizedBox(height: 24),
+
+                if (selectedRole == 'donor') ...[
+                  _buildInputField(
+                    'Full Name',
+                    nameController,
+                    Icons.person_outline_rounded,
                   ),
-                ),
-                SizedBox(height: 8),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 14),
-                  decoration: BoxDecoration(
-                    color: Color(0xFFF5F5F5),
-                    borderRadius: BorderRadius.circular(14),
+                  SizedBox(height: 16),
+                  _buildInputField(
+                    'Email',
+                    emailController,
+                    Icons.mail_outline_rounded,
                   ),
-                  child: DropdownButtonFormField<String>(
-                    initialValue: selectedBloodType,
-                    decoration: InputDecoration(
-                      border: InputBorder.none,
-                      icon: Icon(
-                        Icons.water_drop_outlined,
-                        color: Color(0xFF8E8E93),
-                        size: 22,
+                  SizedBox(height: 16),
+                  _buildInputField(
+                    'Phone',
+                    phoneController,
+                    Icons.phone_outlined,
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'Blood Type',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF333333),
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 14),
+                    decoration: BoxDecoration(
+                      color: Color(0xFFF5F5F5),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: DropdownButtonFormField<String>(
+                      initialValue: selectedBloodType,
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        icon: Icon(
+                          Icons.water_drop_outlined,
+                          color: Color(0xFF8E8E93),
+                          size: 22,
+                        ),
                       ),
+                      hint: Text(
+                        'Select blood type',
+                        style: TextStyle(color: Color(0xFFBDBDBD), fontSize: 15),
+                      ),
+                      items: ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-']
+                          .map(
+                            (type) =>
+                                DropdownMenuItem(value: type, child: Text(type)),
+                          )
+                          .toList(),
+                      onChanged: (value) =>
+                          setState(() => selectedBloodType = value),
                     ),
-                    hint: Text(
-                      'Select blood type',
-                      style: TextStyle(color: Color(0xFFBDBDBD), fontSize: 15),
-                    ),
-                    items: ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-']
-                        .map(
-                          (type) =>
-                              DropdownMenuItem(value: type, child: Text(type)),
-                        )
-                        .toList(),
-                    onChanged: (value) =>
-                        setState(() => selectedBloodType = value),
                   ),
-                ),
-
-                SizedBox(height: 16),
+                  SizedBox(height: 16),
+                ] else if (selectedRole == 'hospital') ...[
+                  _buildInputField(
+                    'Hospital Name',
+                    hospitalNameController,
+                    Icons.local_hospital_rounded,
+                  ),
+                  SizedBox(height: 16),
+                  _buildInputField(
+                    'Email',
+                    emailController,
+                    Icons.mail_outline_rounded,
+                  ),
+                  SizedBox(height: 16),
+                  _buildInputField(
+                    'Phone',
+                    phoneController,
+                    Icons.phone_outlined,
+                  ),
+                  SizedBox(height: 16),
+                  _buildInputField(
+                    'Address',
+                    hospitalAddressController,
+                    Icons.location_on_outlined,
+                  ),
+                  SizedBox(height: 16),
+                ] else ...[
+                  _buildInputField(
+                    'Name',
+                    nameController,
+                    Icons.person_outline_rounded,
+                  ),
+                  SizedBox(height: 16),
+                  _buildInputField(
+                    'Email',
+                    emailController,
+                    Icons.mail_outline_rounded,
+                  ),
+                  SizedBox(height: 16),
+                  _buildInputField(
+                    'Phone',
+                    phoneController,
+                    Icons.phone_outlined,
+                  ),
+                  SizedBox(height: 16),
+                  _buildInputField(
+                    'Admin Code',
+                    adminCodeController,
+                    Icons.key_rounded,
+                  ),
+                  SizedBox(height: 16),
+                ],
 
                 Text(
                   'Password',
@@ -248,8 +308,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   Widget _buildInputField(
     String label,
     TextEditingController controller,
-    IconData icon,
-  ) {
+    IconData icon, {
+    bool isPassword = false,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -269,8 +330,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           ),
           child: TextField(
             controller: controller,
+            obscureText: isPassword ? obscurePassword : false,
             decoration: InputDecoration(
-              hintText: 'Enter your $label',
+              hintText: 'Enter $label',
               hintStyle: TextStyle(color: Color(0xFFBDBDBD), fontSize: 15),
               border: InputBorder.none,
               contentPadding: EdgeInsets.symmetric(
@@ -278,6 +340,19 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 vertical: 16,
               ),
               prefixIcon: Icon(icon, color: Color(0xFF8E8E93), size: 22),
+              suffixIcon: isPassword
+                  ? GestureDetector(
+                      onTap: () =>
+                          setState(() => obscurePassword = !obscurePassword),
+                      child: Icon(
+                        obscurePassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        color: Color(0xFF8E8E93),
+                        size: 22,
+                      ),
+                    )
+                  : null,
             ),
           ),
         ),
@@ -285,16 +360,93 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     );
   }
 
+  Widget _buildLabel(String text) {
+    return Text(
+      text,
+      style: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFF333333),
+      ),
+    );
+  }
+
+  Widget _buildRoleSelector() {
+    return Row(
+      children: [
+        _buildRoleCard(
+          role: 'donor',
+          label: 'Donor',
+          icon: Icons.bloodtype_rounded,
+          color: Color(0xFFC62828),
+        ),
+        SizedBox(width: 12),
+        _buildRoleCard(
+          role: 'hospital',
+          label: 'Hospital',
+          icon: Icons.local_hospital_rounded,
+          color: Color(0xFF1565C0),
+        ),
+        SizedBox(width: 12),
+        _buildRoleCard(
+          role: 'admin',
+          label: 'Admin',
+          icon: Icons.admin_panel_settings_rounded,
+          color: Color(0xFF6A1B9A),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRoleCard({
+    required String role,
+    required String label,
+    required IconData icon,
+    required Color color,
+  }) {
+    bool isSelected = selectedRole == role;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => selectedRole = role),
+        child: Container(
+          padding: EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            color: isSelected ? color.withOpacity(0.08) : Color(0xFFF5F5F5),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isSelected ? color : Colors.transparent,
+              width: 2,
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 28,
+                color: isSelected ? color : Color(0xFF8E8E93),
+              ),
+              SizedBox(height: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: isSelected ? color : Color(0xFF8E8E93),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _handleRegister() async {
-    // Validate all fields are filled
-    if (nameController.text.trim().isEmpty ||
-        emailController.text.trim().isEmpty ||
-        phoneController.text.trim().isEmpty ||
-        selectedBloodType == null ||
-        passwordController.text.isEmpty) {
+    if (emailController.text.trim().isEmpty || passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Please fill all fields'),
+          content: Text('Please fill all required fields'),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
@@ -317,28 +469,74 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       return;
     }
 
+    bool isValid = false;
+    String errorMsg = 'Please fill all fields';
+
+    if (selectedRole == 'donor') {
+      isValid = nameController.text.trim().isNotEmpty &&
+          phoneController.text.trim().isNotEmpty &&
+          selectedBloodType != null;
+      errorMsg = 'Please fill name, phone and select blood type';
+    } else if (selectedRole == 'hospital') {
+      isValid = hospitalNameController.text.trim().isNotEmpty &&
+          phoneController.text.trim().isNotEmpty &&
+          hospitalAddressController.text.trim().isNotEmpty;
+      errorMsg = 'Please fill hospital name, phone and address';
+    } else {
+      isValid = nameController.text.trim().isNotEmpty &&
+          phoneController.text.trim().isNotEmpty &&
+          adminCodeController.text.trim().isNotEmpty;
+      errorMsg = 'Please fill all fields and enter admin code';
+      if (isValid && adminCodeController.text.trim() != 'ADMIN2024') {
+        isValid = false;
+        errorMsg = 'Invalid admin code';
+      }
+    }
+
+    if (!isValid) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMsg),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+      return;
+    }
+
     setState(() => isLoading = true);
 
     try {
-      // Step 1: Create the account in Firebase Auth
       UserCredential userCredential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(
             email: emailController.text.trim(),
             password: passwordController.text,
           );
 
-      // Step 2: Save extra user info to Firestore under 'users' collection
+      Map<String, dynamic> userData = {
+        'email': emailController.text.trim(),
+        'phone': phoneController.text.trim(),
+        'role': selectedRole,
+        'createdAt': FieldValue.serverTimestamp(),
+      };
+
+      if (selectedRole == 'donor') {
+        userData['name'] = nameController.text.trim();
+        userData['bloodType'] = selectedBloodType;
+      } else if (selectedRole == 'hospital') {
+        userData['name'] = hospitalNameController.text.trim();
+        userData['address'] = hospitalAddressController.text.trim();
+        userData['verified'] = false;
+      } else {
+        userData['name'] = nameController.text.trim();
+      }
+
       await FirebaseFirestore.instance
           .collection('users')
           .doc(userCredential.user!.uid)
-          .set({
-            'name': nameController.text.trim(),
-            'email': emailController.text.trim(),
-            'phone': phoneController.text.trim(),
-            'bloodType': selectedBloodType,
-            'role': 'donor',
-            'createdAt': FieldValue.serverTimestamp(),
-          });
+          .set(userData);
 
       if (mounted) {
         setState(() => isLoading = false);
@@ -352,7 +550,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             ),
           ),
         );
-        Navigator.pushReplacementNamed(context, '/home');
+        Navigator.pushReplacementNamed(context, '/login');
       }
     } on FirebaseAuthException catch (e) {
       setState(() => isLoading = false);
@@ -402,6 +600,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     emailController.dispose();
     phoneController.dispose();
     passwordController.dispose();
+    hospitalNameController.dispose();
+    hospitalAddressController.dispose();
+    adminCodeController.dispose();
     super.dispose();
   }
 }
