@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+// Donor dashboard - main home screen after login
+// Shows stats, recent activity, and quick actions
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -15,6 +17,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.dispose();
   }
 
+  // Get current user ID
   String get _uid => FirebaseAuth.instance.currentUser?.uid ?? '';
 
   @override
@@ -23,6 +26,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       backgroundColor: const Color(0xFFF5F5F5),
       body: SafeArea(
         child: StreamBuilder<DocumentSnapshot>(
+          // Listen to current user document in real-time
           stream: FirebaseFirestore.instance
               .collection('users')
               .doc(_uid)
@@ -45,6 +49,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               );
             }
 
+            // Get user data
             final userData = userSnap.data?.data() as Map<String, dynamic>? ?? {};
             final name = userData['name'] ?? 'User';
             final donations = userData['donations'] ?? 0;
@@ -52,6 +57,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
             return CustomScrollView(
               slivers: [
+                // App bar with gradient background
                 SliverAppBar(
                   expandedHeight: 180,
                   floating: false,
@@ -73,6 +79,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                   actions: [
+                    // Notifications button
                     IconButton(
                       icon: const Icon(Icons.notifications_rounded),
                       onPressed: () =>
@@ -86,6 +93,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Welcome message
                         Text(
                           'Welcome back, $name!',
                           style: const TextStyle(
@@ -95,6 +103,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         ),
                         const SizedBox(height: 20),
+                        // Stats row (donations + points)
                         Row(
                           children: [
                             Expanded(
@@ -118,6 +127,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         const SizedBox(height: 20),
 
+                        // Eligibility check card
                         GestureDetector(
                           onTap: () => _showEligibilityDialog(context),
                           child: Container(
@@ -180,6 +190,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                         const SizedBox(height: 30),
 
+                        // Recent Activity section
                         const Text(
                           'Recent Activity',
                           style: TextStyle(
@@ -192,6 +203,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         _buildRecentActivity(),
 
                         const SizedBox(height: 30),
+                        // Quick Actions section
                         const Text(
                           'Quick Actions',
                           style: TextStyle(
@@ -201,6 +213,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         ),
                         const SizedBox(height: 15),
+                        // Blood Requests action
                         _buildActionCard(
                           context,
                           'Blood Requests',
@@ -209,6 +222,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           const Color(0xFFD32F2F),
                           '/requests',
                         ),
+                        // Events action
                         _buildActionCard(
                           context,
                           'Donation Events',
@@ -217,6 +231,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           const Color(0xFF1976D2),
                           '/events',
                         ),
+                        // Learn action
                         _buildActionCard(
                           context,
                           'Learn More',
@@ -237,10 +252,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  // Build recent activity section (blood requests + events)
   Widget _buildRecentActivity() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Blood requests section
         const Text(
           'Blood Requests Near You',
           style: TextStyle(
@@ -339,6 +356,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           },
         ),
         const SizedBox(height: 20),
+        // Events section
         const Text(
           'Upcoming Events',
           style: TextStyle(
@@ -440,6 +458,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  // Show eligibility checklist dialog
   void _showEligibilityDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -492,6 +511,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  // Build check item in dialog
   Widget _buildCheckItem(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -517,6 +537,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  // Build stat card (donations/points)
   Widget _buildStatCard(
     String value,
     String label,
@@ -556,6 +577,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  // Build action card for quick actions
   Widget _buildActionCard(
     BuildContext context,
     String title,

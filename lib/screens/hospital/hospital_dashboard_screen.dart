@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+// Hospital Dashboard screen
+// Main screen for hospital users - shows requests and events stats
 class HospitalDashboardScreen extends StatefulWidget {
   const HospitalDashboardScreen({super.key});
 
@@ -15,6 +17,7 @@ class _HospitalDashboardScreenState extends State<HospitalDashboardScreen> {
     super.dispose();
   }
 
+  // Get current user ID
   String get _uid => FirebaseAuth.instance.currentUser?.uid ?? '';
 
   @override
@@ -34,8 +37,10 @@ class _HospitalDashboardScreenState extends State<HospitalDashboardScreen> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
+          // Stats row
           Row(
             children: [
+              // Active requests count (live from Firestore)
               Expanded(
                 child: _buildLiveStatCard(
                   stream: FirebaseFirestore.instance
@@ -48,6 +53,7 @@ class _HospitalDashboardScreenState extends State<HospitalDashboardScreen> {
                 ),
               ),
               const SizedBox(width: 14),
+              // Events count (live from Firestore)
               Expanded(
                 child: _buildLiveStatCard(
                   stream: FirebaseFirestore.instance
@@ -64,6 +70,7 @@ class _HospitalDashboardScreenState extends State<HospitalDashboardScreen> {
 
           const SizedBox(height: 28),
 
+          // Hospital Actions section title
           const Text(
             'Hospital Actions',
             style: TextStyle(
@@ -75,6 +82,7 @@ class _HospitalDashboardScreenState extends State<HospitalDashboardScreen> {
 
           const SizedBox(height: 14),
 
+          // Post Blood Request action
           _buildActionTile(
             context,
             title: 'Post Blood Request',
@@ -83,6 +91,7 @@ class _HospitalDashboardScreenState extends State<HospitalDashboardScreen> {
             color: const Color(0xFFC62828),
             onTap: () => Navigator.pushNamed(context, '/post_request'),
           ),
+          // Create Event action
           _buildActionTile(
             context,
             title: 'Create Event',
@@ -91,6 +100,7 @@ class _HospitalDashboardScreenState extends State<HospitalDashboardScreen> {
             color: const Color(0xFF1565C0),
             onTap: () => Navigator.pushNamed(context, '/create_event'),
           ),
+          // View Donors action
           _buildActionTile(
             context,
             title: 'View Donors',
@@ -104,6 +114,7 @@ class _HospitalDashboardScreenState extends State<HospitalDashboardScreen> {
     );
   }
 
+  // Build live stat card that streams count from Firestore
   Widget _buildLiveStatCard({
     required Stream<QuerySnapshot> stream,
     required String label,
@@ -149,6 +160,7 @@ class _HospitalDashboardScreenState extends State<HospitalDashboardScreen> {
     );
   }
 
+  // Shell for stat card (icon + label + value)
   Widget _statCardShell({
     required Widget child,
     required String label,
@@ -192,6 +204,7 @@ class _HospitalDashboardScreenState extends State<HospitalDashboardScreen> {
     );
   }
 
+  // Build action tile that navigates to another screen
   Widget _buildActionTile(
     BuildContext context, {
     required String title,

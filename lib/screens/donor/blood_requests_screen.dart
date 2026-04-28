@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+// Blood Requests screen
+// Shows list of blood requests from hospitals, allows donating
 class BloodRequestsScreen extends StatelessWidget {
   const BloodRequestsScreen({super.key});
 
@@ -31,6 +33,7 @@ class BloodRequestsScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
       ),
+      // Stream blood requests from Firestore in real-time
       body: StreamBuilder<QuerySnapshot>(
         // Listen to the blood_requests collection, newest first
         stream: FirebaseFirestore.instance
@@ -112,6 +115,7 @@ class BloodRequestsScreen extends StatelessWidget {
     );
   }
 
+  // Build a single request card
   Widget _buildRequestCard({
     required BuildContext context,
     required String docId,
@@ -138,8 +142,10 @@ class BloodRequestsScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header row with blood type and urgency badge
           Row(
             children: [
+              // Blood type circle
               Container(
                 width: 50,
                 height: 50,
@@ -179,6 +185,7 @@ class BloodRequestsScreen extends StatelessWidget {
                   ],
                 ),
               ),
+              // Urgency badge
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
@@ -199,6 +206,7 @@ class BloodRequestsScreen extends StatelessWidget {
 
           SizedBox(height: 14),
 
+          // Hospital location
           Row(
             children: [
               Icon(
@@ -216,6 +224,7 @@ class BloodRequestsScreen extends StatelessWidget {
 
           SizedBox(height: 14),
 
+          // Donate Now button
           Row(
             children: [
               // Donate Now button
@@ -249,6 +258,7 @@ class BloodRequestsScreen extends StatelessWidget {
     );
   }
 
+  // Handle donate button - track response and award points
   void _handleDonate(BuildContext context, String docId, String bloodType) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;

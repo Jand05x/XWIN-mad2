@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
+// Verification Queue screen
+// Allows admins to approve/reject donor registrations
 class VerificationQueueScreen extends StatelessWidget {
   const VerificationQueueScreen({super.key});
 
@@ -18,6 +20,7 @@ class VerificationQueueScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
       ),
+      // Stream pending donor verifications from Firestore
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('users')
@@ -55,6 +58,7 @@ class VerificationQueueScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Count badge
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
@@ -84,6 +88,7 @@ class VerificationQueueScreen extends StatelessWidget {
 
                 const SizedBox(height: 20),
 
+                // No pending verifications
                 if (pending.isEmpty)
                   const Expanded(
                     child: Center(
@@ -94,6 +99,7 @@ class VerificationQueueScreen extends StatelessWidget {
                     ),
                   )
                 else
+                  // List of pending verifications
                   Expanded(
                     child: ListView.builder(
                       itemCount: pending.length,
@@ -124,6 +130,7 @@ class VerificationQueueScreen extends StatelessWidget {
     );
   }
 
+  // Format date helper
   String _formatDate(DateTime dt) {
     const months = [
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -132,6 +139,7 @@ class VerificationQueueScreen extends StatelessWidget {
     return '${months[dt.month - 1]} ${dt.day}, ${dt.year}';
   }
 
+  // Build verification card
   Widget _buildVerificationCard(
     BuildContext context, {
     required String docId,
@@ -156,6 +164,7 @@ class VerificationQueueScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header row with avatar, name, blood type, date
           Row(
             children: [
               Container(
@@ -225,6 +234,7 @@ class VerificationQueueScreen extends StatelessWidget {
 
           const SizedBox(height: 14),
 
+          // Documents section (placeholder)
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -242,8 +252,10 @@ class VerificationQueueScreen extends StatelessWidget {
 
           const SizedBox(height: 16),
 
+          // Approve/Reject buttons
           Row(
             children: [
+              // Approve button
               Expanded(
                 child: SizedBox(
                   height: 46,
@@ -265,6 +277,7 @@ class VerificationQueueScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
+              // Reject button
               Expanded(
                 child: SizedBox(
                   height: 46,
@@ -291,6 +304,7 @@ class VerificationQueueScreen extends StatelessWidget {
     );
   }
 
+  // Update donor verification status
   Future<void> _updateStatus(
     BuildContext context,
     String docId,
@@ -328,6 +342,7 @@ class VerificationQueueScreen extends StatelessWidget {
     }
   }
 
+  // Build document row
   Widget _buildDocRow(IconData icon, String text) {
     return Row(
       children: [

@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+// Change Password screen
+// Allows users to update their Firebase Auth password
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
 
@@ -9,15 +11,18 @@ class ChangePasswordScreen extends StatefulWidget {
 }
 
 class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
+  // Form controllers
   final TextEditingController currentPasswordController =
       TextEditingController();
   final TextEditingController newPasswordController = TextEditingController();
   final TextEditingController confirmPasswordController =
       TextEditingController();
 
+  // Password visibility toggles
   bool obscureCurrent = true;
   bool obscureNew = true;
   bool obscureConfirm = true;
+  // Loading state
   bool isLoading = false;
 
   @override
@@ -39,6 +44,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header icon
             Container(
               width: 56,
               height: 56,
@@ -55,6 +61,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
             SizedBox(height: 20),
 
+            // Title
             Text(
               'Update Password',
               style: TextStyle(
@@ -71,6 +78,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
             SizedBox(height: 32),
 
+            // Current password field
             _buildPasswordField(
               'Current Password',
               currentPasswordController,
@@ -80,6 +88,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               },
             ),
             SizedBox(height: 16),
+            // New password field
             _buildPasswordField(
               'New Password',
               newPasswordController,
@@ -89,6 +98,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               },
             ),
             SizedBox(height: 16),
+            // Confirm password field
             _buildPasswordField(
               'Confirm Password',
               confirmPasswordController,
@@ -100,6 +110,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
             SizedBox(height: 36),
 
+            // Update button
             SizedBox(
               width: double.infinity,
               height: 54,
@@ -137,6 +148,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     );
   }
 
+  // Build password field helper
   Widget _buildPasswordField(
     String label,
     TextEditingController controller,
@@ -200,6 +212,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     );
   }
 
+  // Handle password change
   void _changePassword() async {
     // Local validation first
     if (currentPasswordController.text.isEmpty) {
@@ -265,6 +278,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     }
   }
 
+  // Show snackbar message
   void _showMessage(String msg, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+// About App screen
+// Shows app information, features, and contact details
 class AboutAppScreen extends StatelessWidget {
   const AboutAppScreen({super.key});
 
@@ -23,6 +25,7 @@ class AboutAppScreen extends StatelessWidget {
           children: [
             SizedBox(height: 10),
 
+            // App logo
             Container(
               width: 90,
               height: 90,
@@ -41,6 +44,7 @@ class AboutAppScreen extends StatelessWidget {
 
             SizedBox(height: 20),
 
+            // App name
             Text(
               'XwinLink',
               style: TextStyle(
@@ -50,6 +54,7 @@ class AboutAppScreen extends StatelessWidget {
               ),
             ),
             SizedBox(height: 6),
+            // Version badge
             Container(
               padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
@@ -68,6 +73,7 @@ class AboutAppScreen extends StatelessWidget {
 
             SizedBox(height: 30),
 
+            // About section
             _buildSection(
               'About',
               'This blood donation app connects donors with hospitals and blood banks in need. '
@@ -76,6 +82,7 @@ class AboutAppScreen extends StatelessWidget {
 
             SizedBox(height: 24),
 
+            // Features section
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
@@ -111,6 +118,7 @@ class AboutAppScreen extends StatelessWidget {
 
             SizedBox(height: 24),
 
+            // Contact section
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
@@ -132,10 +140,9 @@ class AboutAppScreen extends StatelessWidget {
 
             SizedBox(height: 30),
 
-            // Fixed: was showing broken characters like Â© and â¤ï¸
-            // Now using proper Unicode © and ❤️
+            // Footer
             Text(
-              '© 2025 XwinLink. Made with ❤️ to save lives.',
+              '© 2025 XwinLink. Made with love to save lives.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12, color: Color(0xFFBDBDBD)),
             ),
@@ -147,6 +154,7 @@ class AboutAppScreen extends StatelessWidget {
     );
   }
 
+  // Build about section
   Widget _buildSection(String title, String body) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -168,6 +176,7 @@ class AboutAppScreen extends StatelessWidget {
     );
   }
 
+  // Build feature item
   Widget _buildFeature(IconData icon, Color color, String text) {
     return Container(
       margin: EdgeInsets.only(bottom: 10),
@@ -206,6 +215,7 @@ class AboutAppScreen extends StatelessWidget {
     );
   }
 
+  // Build contact row
   Widget _buildContactRow(IconData icon, String text) {
     return Row(
       children: [

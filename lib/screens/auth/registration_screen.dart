@@ -5,6 +5,8 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'dart:convert';
 
+// Registration screen for creating new accounts
+// Supports 3 roles: donor, hospital, admin
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
 
@@ -13,6 +15,7 @@ class RegistrationScreen extends StatefulWidget {
 }
 
 class _RegistrationScreenState extends State<RegistrationScreen> {
+  // Form controllers for text fields
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
@@ -21,15 +24,21 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final TextEditingController hospitalAddressController = TextEditingController();
   final TextEditingController adminCodeController = TextEditingController();
 
+  // Selected role (donor, hospital, or admin)
   String selectedRole = 'donor';
+  // Selected blood type for donors
   String? selectedBloodType;
+  // Loading state
   bool isLoading = false;
+  // Toggle password visibility
   bool obscurePassword = true;
 
+  // Image files for donor verification
   File? idImageFile;
   File? selfieImageFile;
   final ImagePicker _picker = ImagePicker();
 
+  // Pick image from gallery
   Future<void> _pickImage(bool isId) async {
     final XFile? picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
     if (picked != null) {
@@ -43,7 +52,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     }
   }
 
+  // Handle account creation
   void _handleRegister() async {
+    // Basic validation
     if (emailController.text.trim().isEmpty || passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -55,6 +66,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       return;
     }
 
+    // Password length check
     if (passwordController.text.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -66,6 +78,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       return;
     }
 
+    // Role-specific validation
     bool isValid = false;
     String errorMsg = 'Please fill all fields';
 
@@ -84,6 +97,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           phoneController.text.trim().isNotEmpty &&
           adminCodeController.text.trim().isNotEmpty;
       errorMsg = 'Please fill all fields and enter admin code';
+      // Verify admin code
       if (isValid && adminCodeController.text.trim() != 'ADMIN2024') {
         isValid = false;
         errorMsg = 'Invalid admin code';
@@ -104,6 +118,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     setState(() => isLoading = true);
 
     try {
+      // Create user with Firebase Auth
       UserCredential userCredential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(
             email: emailController.text.trim(),
@@ -112,6 +127,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
       String uid = userCredential.user!.uid;
 
+      // Build user data map based on role
       Map<String, dynamic> userData = {
         'uid': uid,
         'email': emailController.text.trim(),
@@ -122,11 +138,13 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
       String targetCollection;
 
+      // Role-specific data
       if (selectedRole == 'donor') {
         targetCollection = 'donors';
         userData['name'] = nameController.text.trim();
         userData['bloodType'] = selectedBloodType;
         userData['verificationStatus'] = 'pending';
+        // Convert images to base64
         if (idImageFile != null) {
           userData['idImageBase64'] = base64Encode(await idImageFile!.readAsBytes());
         }
@@ -159,6 +177,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         );
+        // Navigate based on role
         if (selectedRole == 'donor') {
           Navigator.pushReplacementNamed(context, '/dashboard');
         } else if (selectedRole == 'hospital') {
@@ -207,6 +226,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 16),
+                // Back button
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
                   child: Container(
@@ -220,6 +240,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   ),
                 ),
                 const SizedBox(height: 28),
+                // Title
                 const Text(
                   'Create\nAccount',
                   style: TextStyle(fontSize: 34, fontWeight: FontWeight.w800, color: Color(0xFF1A1A2E), height: 1.15),
@@ -231,7 +252,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 const SizedBox(height: 12),
                 _buildRoleSelector(),
                 const SizedBox(height: 24),
+                // Show fields based on selected role
                 if (selectedRole == 'donor') ...[
+                  // Donor fields
                   _buildInputField('Full Name', nameController, Icons.person_outline_rounded),
                   const SizedBox(height: 16),
                   _buildInputField('Email', emailController, Icons.mail_outline_rounded),
@@ -256,6 +279,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   const SizedBox(height: 16),
                   _buildVerificationSection(),
                 ] else if (selectedRole == 'hospital') ...[
+                  // Hospital fields
                   _buildInputField('Hospital Name', hospitalNameController, Icons.local_hospital_rounded),
                   const SizedBox(height: 16),
                   _buildInputField('Email', emailController, Icons.mail_outline_rounded),
@@ -265,6 +289,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   _buildInputField('Address', hospitalAddressController, Icons.location_on_outlined),
                   const SizedBox(height: 16),
                 ] else ...[
+                  // Admin fields
                   _buildInputField('Name', nameController, Icons.person_outline_rounded),
                   const SizedBox(height: 16),
                   _buildInputField('Email', emailController, Icons.mail_outline_rounded),
@@ -274,6 +299,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   _buildInputField('Admin Code', adminCodeController, Icons.key_rounded),
                   const SizedBox(height: 16),
                 ],
+                // Password field (for all roles)
                 _buildLabel('Password'),
                 const SizedBox(height: 8),
                 Container(
@@ -295,6 +321,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   ),
                 ),
                 const SizedBox(height: 36),
+                // Register button
                 SizedBox(
                   width: double.infinity,
                   height: 54,
@@ -312,6 +339,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
+                // Login link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -331,6 +359,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     );
   }
 
+  // Build image upload box for donor verification
   Widget _buildImageUploadBox(String label, IconData icon, File? file, bool isId) {
     return GestureDetector(
       onTap: () => _pickImage(isId),
@@ -374,6 +403,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     );
   }
 
+  // Build verification section for donors (ID + selfie)
   Widget _buildVerificationSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -430,6 +460,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     );
   }
 
+  // Build input field helper
   Widget _buildInputField(String label, TextEditingController controller, IconData icon) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -453,10 +484,12 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     );
   }
 
+  // Build label helper
   Widget _buildLabel(String text) {
     return Text(text, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF333333)));
   }
 
+  // Build role selector (donor/hospital/admin)
   Widget _buildRoleSelector() {
     return Row(
       children: [
@@ -469,6 +502,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     );
   }
 
+  // Build role card (selectable button)
   Widget _buildRoleCard({required String role, required String label, required IconData icon, required Color color}) {
     bool isSelected = selectedRole == role;
     return Expanded(
@@ -496,6 +530,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   @override
   void dispose() {
+    // Clean up controllers
     nameController.dispose();
     emailController.dispose();
     phoneController.dispose();

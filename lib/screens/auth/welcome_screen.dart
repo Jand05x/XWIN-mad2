@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 
+// Welcome/Landing screen shown when user first opens the app
+// Displays branding and buttons to login or register
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Full-screen gradient background (red theme)
       body: Container(
         width: double.infinity,
         decoration: BoxDecoration(
@@ -15,13 +18,16 @@ class WelcomeScreen extends StatelessWidget {
             colors: [Color(0xFFB71C1C), Color(0xFFC62828), Color(0xFFD32F2F)],
           ),
         ),
+        // Safe area for notch/status bar
         child: SafeArea(
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 32),
             child: Column(
               children: [
+                // Spacer to push content down
                 Spacer(flex: 2),
 
+                // App logo icon (blood drop)
                 Container(
                   width: 130,
                   height: 130,
@@ -45,6 +51,7 @@ class WelcomeScreen extends StatelessWidget {
 
                 SizedBox(height: 32),
 
+                // App name
                 Text(
                   'XwinLink',
                   style: TextStyle(
@@ -57,6 +64,7 @@ class WelcomeScreen extends StatelessWidget {
 
                 SizedBox(height: 8),
 
+                // Tagline
                 Text(
                   'Every drop saves a life',
                   style: TextStyle(
@@ -67,8 +75,10 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                 ),
 
+                // Spacer to push buttons down
                 Spacer(flex: 3),
 
+                // Login button
                 SizedBox(
                   width: double.infinity,
                   height: 56,
@@ -97,6 +107,7 @@ class WelcomeScreen extends StatelessWidget {
 
                 SizedBox(height: 14),
 
+                // Register button (outlined style)
                 SizedBox(
                   width: double.infinity,
                   height: 56,
@@ -127,6 +138,7 @@ class WelcomeScreen extends StatelessWidget {
 
                 SizedBox(height: 32),
 
+                // Call to action text
                 Text(
                   'Be a hero. Donate blood today.',
                   style: TextStyle(

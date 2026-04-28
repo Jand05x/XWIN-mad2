@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+// Learn About Donation screen
+// Educational content about blood donation
 class LearnAboutDonationScreen extends StatelessWidget {
   const LearnAboutDonationScreen({super.key});
 
@@ -20,6 +22,7 @@ class LearnAboutDonationScreen extends StatelessWidget {
       body: ListView(
         padding: EdgeInsets.all(20),
         children: [
+          // Header icon
           Container(
             width: 80,
             height: 80,
@@ -36,6 +39,7 @@ class LearnAboutDonationScreen extends StatelessWidget {
 
           SizedBox(height: 24),
 
+          // Article: Benefits of Blood Donation
           _buildArticleCard(
             context,
             icon: Icons.favorite_rounded,
@@ -51,6 +55,7 @@ class LearnAboutDonationScreen extends StatelessWidget {
                 '5. Saves up to 3 lives per donation\n\n'
                 'Regular donors often report feeling a sense of purpose and improved well-being.',
           ),
+          // Article: Who Can Donate?
           _buildArticleCard(
             context,
             icon: Icons.people_rounded,
@@ -66,6 +71,7 @@ class LearnAboutDonationScreen extends StatelessWidget {
                 '5. Not have certain medical conditions\n\n'
                 'Always consult with the medical staff at the donation center for specific eligibility.',
           ),
+          // Article: How to Prepare
           _buildArticleCard(
             context,
             icon: Icons.checklist_rounded,
@@ -81,6 +87,7 @@ class LearnAboutDonationScreen extends StatelessWidget {
                 '5. Bring a valid photo ID\n\n'
                 'After your donation, rest for 10-15 minutes and enjoy a snack.',
           ),
+          // Article: Common Myths
           _buildArticleCard(
             context,
             icon: Icons.lightbulb_rounded,
@@ -101,6 +108,7 @@ class LearnAboutDonationScreen extends StatelessWidget {
     );
   }
 
+  // Build an article card that opens a dialog with full content
   Widget _buildArticleCard(
     BuildContext context, {
     required IconData icon,
@@ -162,6 +170,7 @@ class LearnAboutDonationScreen extends StatelessWidget {
         ),
         child: Row(
           children: [
+            // Icon
             Container(
               width: 46,
               height: 46,
@@ -172,6 +181,7 @@ class LearnAboutDonationScreen extends StatelessWidget {
               child: Icon(icon, color: color, size: 24),
             ),
             SizedBox(width: 14),
+            // Title and description
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -192,6 +202,7 @@ class LearnAboutDonationScreen extends StatelessWidget {
                 ],
               ),
             ),
+            // Arrow
             Icon(
               Icons.chevron_right_rounded,
               color: Color(0xFFCCCCCC),

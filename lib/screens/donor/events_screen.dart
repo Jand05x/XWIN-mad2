@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+// Events screen
+// Shows list of upcoming donation events
 class EventsScreen extends StatelessWidget {
   const EventsScreen({super.key});
 
@@ -31,6 +33,7 @@ class EventsScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
       ),
+      // Stream events from Firestore
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('events')
@@ -110,6 +113,7 @@ class EventsScreen extends StatelessWidget {
     );
   }
 
+  // Build a single event card
   Widget _buildEventCard({
     required BuildContext context,
     required String docId,
@@ -136,6 +140,7 @@ class EventsScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header with icon and title
           Row(
             children: [
               Container(
@@ -163,6 +168,7 @@ class EventsScreen extends StatelessWidget {
 
           SizedBox(height: 16),
 
+          // Event details
           _buildDetailRow(Icons.calendar_today_rounded, date, color),
           SizedBox(height: 8),
           _buildDetailRow(
@@ -179,6 +185,7 @@ class EventsScreen extends StatelessWidget {
 
           SizedBox(height: 16),
 
+          // RSVP button
           SizedBox(
             width: double.infinity,
             height: 46,
@@ -203,6 +210,7 @@ class EventsScreen extends StatelessWidget {
     );
   }
 
+  // Build a detail row with icon and text
   Widget _buildDetailRow(IconData icon, String text, Color iconColor) {
     return Row(
       children: [
@@ -218,6 +226,7 @@ class EventsScreen extends StatelessWidget {
     );
   }
 
+  // Handle RSVP button - increment attendees and award points
   void _handleRsvp(BuildContext context, String docId) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;

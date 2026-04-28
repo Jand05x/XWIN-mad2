@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+// Settings screen for donors
+// Contains app preferences and account options
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -9,6 +11,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  // Notification toggle state
   bool notificationsEnabled = true;
 
   @override
@@ -42,6 +45,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             SizedBox(height: 20),
 
+            // Title
             Text(
               'Settings',
               style: TextStyle(
@@ -53,6 +57,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             SizedBox(height: 28),
 
+            // Preferences section
             _buildSectionTitle('Preferences'),
             SizedBox(height: 10),
             Container(
@@ -103,6 +108,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             SizedBox(height: 24),
 
+            // Security section
             _buildSectionTitle('Security'),
             SizedBox(height: 10),
             _buildSettingsTile(
@@ -116,6 +122,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             SizedBox(height: 24),
 
+            // Information section
             _buildSectionTitle('Information'),
             SizedBox(height: 10),
             _buildSettingsTile(
@@ -129,6 +136,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             SizedBox(height: 24),
 
+            // Danger Zone section
             _buildSectionTitle('Danger Zone'),
             SizedBox(height: 10),
             Container(
@@ -182,6 +190,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  // Build section title
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
@@ -194,6 +203,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  // Build settings tile
   Widget _buildSettingsTile({
     required IconData icon,
     required Color iconBg,
@@ -243,6 +253,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  // Show delete account confirmation dialog
   void _showDeleteDialog(BuildContext context) {
     showDialog(
       context: context,

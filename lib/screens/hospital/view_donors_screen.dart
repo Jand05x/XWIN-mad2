@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+// View Donors screen
+// Shows list of verified donors that hospitals can contact
 class ViewDonorsScreen extends StatelessWidget {
   const ViewDonorsScreen({super.key});
 
@@ -19,6 +21,7 @@ class ViewDonorsScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
       ),
+      // Stream verified donors from Firestore
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('users')
@@ -77,6 +80,7 @@ class ViewDonorsScreen extends StatelessWidget {
     );
   }
 
+  // Build a single donor card
   Widget _buildDonorCard(
     BuildContext context,
     String name,
@@ -100,6 +104,7 @@ class ViewDonorsScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
+          // Header row with avatar, name, blood type, phone
           Row(
             children: [
               Container(
@@ -164,6 +169,7 @@ class ViewDonorsScreen extends StatelessWidget {
                   ],
                 ),
               ),
+              // Availability badge
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
@@ -184,6 +190,7 @@ class ViewDonorsScreen extends StatelessWidget {
 
           const SizedBox(height: 14),
 
+          // Contact Donor button (calls phone)
           SizedBox(
             width: double.infinity,
             height: 44,

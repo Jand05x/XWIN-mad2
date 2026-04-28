@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+// Login screen for authenticated users
+// Allows existing users to sign in with email and password
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -10,9 +12,12 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  // Text controllers for form fields
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  // Loading state
   bool isLoading = false;
+  // Toggle password visibility
   bool obscurePassword = true;
 
   @override
@@ -28,6 +33,7 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 SizedBox(height: 16),
 
+                // Back button
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
                   child: Container(
@@ -47,6 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 SizedBox(height: 36),
 
+                // Title
                 Text(
                   'Welcome\nBack',
                   style: TextStyle(
@@ -59,6 +66,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 SizedBox(height: 8),
 
+                // Subtitle
                 Text(
                   'Sign in to your account',
                   style: TextStyle(
@@ -70,6 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 SizedBox(height: 36),
 
+                // Email field label
                 _buildLabel('Email'),
                 SizedBox(height: 8),
                 _buildTextField(
@@ -80,6 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 SizedBox(height: 20),
 
+                // Password field label
                 _buildLabel('Password'),
                 SizedBox(height: 8),
                 Container(
@@ -89,6 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   child: TextField(
                     controller: passwordController,
+                    // Hide/show password toggle
                     obscureText: obscurePassword,
                     decoration: InputDecoration(
                       hintText: 'Enter your password',
@@ -123,6 +134,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 SizedBox(height: 44),
 
+                // Login button
                 SizedBox(
                   width: double.infinity,
                   height: 54,
@@ -157,6 +169,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 SizedBox(height: 28),
 
+                // Register link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -185,6 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  // Helper to build field labels
   Widget _buildLabel(String text) {
     return Text(
       text,
@@ -196,6 +210,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  // Helper to build text fields
   Widget _buildTextField({
     required TextEditingController controller,
     required String hint,
@@ -219,7 +234,9 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  // Handle login with Firebase Auth
   void _handleLogin() async {
+    // Validate email
     if (emailController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -233,6 +250,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+    // Validate password
     if (passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -249,20 +267,24 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => isLoading = true);
 
     try {
+      // Sign in with email and password
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text,
       );
 
+      // Get current user
       User? user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('User not found');
 
+      // Check if user exists in Firestore
       DocumentSnapshot userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .get();
 
       if (!userDoc.exists) {
+        // Not in database - sign out and show error
         await FirebaseAuth.instance.signOut();
         setState(() => isLoading = false);
         if (mounted) {
@@ -280,6 +302,7 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
+      // Get user role and navigate to correct screen
       String role = userDoc.get('role') ?? 'donor';
 
       if (mounted) {
@@ -347,6 +370,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
+    // Clean up controllers
     emailController.dispose();
     passwordController.dispose();
     super.dispose();

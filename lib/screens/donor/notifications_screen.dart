@@ -2,9 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+// Notifications/Activity screen
+// Shows blood requests and events that the user can respond to
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
 
+  // Get current user ID
   String get _uid => FirebaseAuth.instance.currentUser?.uid ?? '';
 
   @override
@@ -42,6 +45,7 @@ class NotificationsScreen extends StatelessWidget {
     );
   }
 
+  // Build list of blood requests
   Widget _buildBloodRequestsList() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
@@ -126,6 +130,7 @@ class NotificationsScreen extends StatelessWidget {
     );
   }
 
+  // Build list of events
   Widget _buildEventsList() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
@@ -212,6 +217,7 @@ class NotificationsScreen extends StatelessWidget {
     );
   }
 
+  // Get icon for notification type
   IconData _iconForType(String type) {
     switch (type) {
       case 'match':
@@ -227,6 +233,7 @@ class NotificationsScreen extends StatelessWidget {
     }
   }
 
+  // Get color for notification type
   Color _colorForType(String type) {
     switch (type) {
       case 'match':
@@ -242,6 +249,7 @@ class NotificationsScreen extends StatelessWidget {
     }
   }
 
+  // Format time ago for notification
   String _timeAgo(DateTime dt) {
     final diff = DateTime.now().difference(dt);
     if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
@@ -249,6 +257,7 @@ class NotificationsScreen extends StatelessWidget {
     return '${diff.inDays} day${diff.inDays == 1 ? '' : 's'} ago';
   }
 
+  // Clear all notifications
   Future<void> _clearAll(BuildContext context) async {
     try {
       final batch = FirebaseFirestore.instance.batch();
@@ -286,6 +295,7 @@ class NotificationsScreen extends StatelessWidget {
     }
   }
 
+  // Build a notification card
   Widget _buildNotification(
     BuildContext context, {
     required String docId,
