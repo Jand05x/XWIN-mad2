@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 // Settings screen for donors
 // Contains app preferences and account options
@@ -277,16 +279,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Account deleted'),
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              );
-              Navigator.pushReplacementNamed(context, '/login');
+              _handleDeleteAccount(context);
             },
             child: Text(
               'Delete',
@@ -299,5 +292,115 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ],
       ),
     );
+  }
+
+  // Permanently delete the user's account and all associated data
+  Future<void> _handleDeleteAccount(BuildContext context) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final uid = user.uid;
+    final db = FirebaseFirestore.instance;
+
+    try {
+      // 1. Get user role to know which role collection to delete from
+      final userDoc = await db.collection('users').doc(uid).get();
+      final role = userDoc.data()?['role'] ?? 'donor';
+
+      final batch = db.batch();
+
+      // 2. Delete all responses this donor made across all blood requests
+      if (role == 'donor') {
+        final requests = await db.collection('blood_requests').get();
+        for (final req in requests.docs) {
+          batch.delete(req.reference.collection('responses').doc(uid));
+        }
+      }
+
+      // 3. Delete all notifications for this user
+      final notifications = await db
+          .collection('notifications')
+          .where('userId', isEqualTo: uid)
+          .get();
+      for (final doc in notifications.docs) {
+        batch.delete(doc.reference);
+      }
+
+      // 4. Delete from role-specific collection
+      final roleCollection = role == 'donor'
+          ? 'donors'
+          : role == 'hospital'
+              ? 'hospitals'
+              : 'admins';
+      batch.delete(db.collection(roleCollection).doc(uid));
+
+      // 5. Delete from users collection
+      batch.delete(db.collection('users').doc(uid));
+
+      await batch.commit();
+
+      // 6. Delete Firebase Auth account
+      await user.delete();
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Account permanently deleted'),
+            backgroundColor: Color(0xFFC62828),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+        Navigator.pushReplacementNamed(context, '/welcome');
+      }
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Please log out and log in again to delete your account'),
+              backgroundColor: Color(0xFFC62828),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+        }
+        // Firestore data was already deleted, sign them out
+        await FirebaseAuth.instance.signOut();
+        if (context.mounted) {
+          Navigator.pushReplacementNamed(context, '/welcome');
+        }
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete account: ${e.message}'),
+              backgroundColor: Color(0xFFC62828),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete account. Please try again.'),
+            backgroundColor: Color(0xFFC62828),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    }
   }
 }
