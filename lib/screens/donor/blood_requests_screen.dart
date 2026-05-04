@@ -35,20 +35,16 @@ class BloodRequestsScreen extends StatelessWidget {
       ),
       // Stream blood requests from Firestore in real-time
       body: StreamBuilder<QuerySnapshot>(
-        // Listen to the blood_requests collection, newest first
         stream: FirebaseFirestore.instance
             .collection('blood_requests')
-            .orderBy('createdAt', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
-          // Still loading
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(
               child: CircularProgressIndicator(color: Color(0xFFC62828)),
             );
           }
 
-          // Firestore error
           if (snapshot.hasError) {
             return Center(
               child: Text(
@@ -58,8 +54,17 @@ class BloodRequestsScreen extends StatelessWidget {
             );
           }
 
-          // No requests yet
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          final docs = snapshot.data?.docs ?? [];
+          docs.sort((a, b) {
+            final aTime = (a.data() as Map<String, dynamic>)['createdAt'] as Timestamp?;
+            final bTime = (b.data() as Map<String, dynamic>)['createdAt'] as Timestamp?;
+            if (aTime == null && bTime == null) return 0;
+            if (aTime == null) return 1;
+            if (bTime == null) return -1;
+            return bTime.compareTo(aTime);
+          });
+
+          if (docs.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -82,9 +87,6 @@ class BloodRequestsScreen extends StatelessWidget {
               ),
             );
           }
-
-          // Show the list of requests from Firestore
-          final docs = snapshot.data!.docs;
 
           return ListView.builder(
             padding: EdgeInsets.all(20),
@@ -224,32 +226,11 @@ class BloodRequestsScreen extends StatelessWidget {
 
           SizedBox(height: 14),
 
-          // Donate Now button
+          // Donate Now / Status button
           Row(
             children: [
-              // Donate Now button
               Expanded(
-                child: SizedBox(
-                  height: 46,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: urgencyColor,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    onPressed: () => _handleDonate(context, docId, bloodType),
-                    child: Text(
-                      'Donate Now',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15,
-                      ),
-                    ),
-                  ),
-                ),
+                child: _buildStatusButton(context, docId, urgencyColor),
               ),
             ],
           ),
@@ -258,8 +239,111 @@ class BloodRequestsScreen extends StatelessWidget {
     );
   }
 
+  // Build status-aware button based on user's response
+  Widget _buildStatusButton(
+    BuildContext context,
+    String docId,
+    Color urgencyColor,
+  ) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return SizedBox(
+        height: 46,
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: urgencyColor,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          onPressed: null,
+          child: Text(
+            'Sign in to donate',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+          ),
+        ),
+      );
+    }
+
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('blood_requests')
+          .doc(docId)
+          .collection('responses')
+          .doc(user.uid)
+          .snapshots(),
+      builder: (context, snap) {
+        if (!snap.hasData) {
+          return SizedBox(
+            height: 46,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: urgencyColor,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () => _handleDonate(context, docId),
+              child: Text(
+                'Donate Now',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+              ),
+            ),
+          );
+        }
+
+        final data = snap.data?.data() as Map<String, dynamic>?;
+        final status = data?['status'] ?? '';
+
+        if (status == 'pending') {
+          return _statusBadge('Pending', Color(0xFFBDBDBD), Icons.hourglass_top_rounded);
+        } else if (status == 'approved') {
+          return _statusBadge('Accepted', Color(0xFF2E7D32), Icons.check_circle_rounded);
+        } else if (status == 'denied') {
+          return _statusBadge('Rejected', Color(0xFFC62828), Icons.cancel_rounded);
+        }
+
+        return SizedBox(
+          height: 46,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: urgencyColor,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () => _handleDonate(context, docId),
+            child: Text(
+              'Donate Now',
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _statusBadge(String text, Color color, IconData icon) {
+    return SizedBox(
+      height: 46,
+      child: OutlinedButton.icon(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: color,
+          side: BorderSide(color: color, width: 1.5),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        icon: Icon(icon, size: 18),
+        label: Text(
+          text,
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+        ),
+        onPressed: null,
+      ),
+    );
+  }
+
   // Handle donate button - register interest, points awarded only after hospital approves
-  void _handleDonate(BuildContext context, String docId, String bloodType) async {
+  void _handleDonate(BuildContext context, String docId) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
