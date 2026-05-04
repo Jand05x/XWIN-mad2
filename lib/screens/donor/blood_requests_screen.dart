@@ -258,31 +258,39 @@ class BloodRequestsScreen extends StatelessWidget {
     );
   }
 
-  // Handle donate button - track response and award points
+  // Handle donate button - register interest, points awarded only after hospital approves
   void _handleDonate(BuildContext context, String docId, String bloodType) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
     try {
-      // Track the donor's response
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      final name = userDoc.data()?['name'] ?? 'Donor';
+      final donorBloodType = userDoc.data()?['bloodType'] ?? '';
+      final phone = userDoc.data()?['phone'] ?? '';
+
       await FirebaseFirestore.instance
           .collection('blood_requests')
           .doc(docId)
-          .update({
-        'responders': FieldValue.arrayUnion([user.uid]),
-      });
-
-      // Increment donor's points and donations
-      final userDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
-      await userDoc.update({
-        'points': FieldValue.increment(10),
-        'donations': FieldValue.increment(1),
+          .collection('responses')
+          .doc(user.uid)
+          .set({
+        'userId': user.uid,
+        'userName': name,
+        'bloodType': donorBloodType,
+        'phone': phone,
+        'status': 'pending',
+        'respondedAt': FieldValue.serverTimestamp(),
       });
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Thank you for volunteering! +10 points'),
+            content: Text('Donation request sent! Waiting for hospital approval.'),
             backgroundColor: Color(0xFF2E7D32),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(

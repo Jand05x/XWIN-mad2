@@ -104,7 +104,7 @@ class _HospitalDashboardScreenState extends State<HospitalDashboardScreen> {
           _buildActionTile(
             context,
             title: 'View Donors',
-            subtitle: 'See registered donors',
+            subtitle: 'Manage donation responses',
             icon: Icons.people_rounded,
             color: const Color(0xFFF57C00),
             onTap: () => Navigator.pushNamed(context, '/view_donors'),

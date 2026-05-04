@@ -305,6 +305,23 @@ class _LoginScreenState extends State<LoginScreen> {
       // Get user role and navigate to correct screen
       String role = userDoc.get('role') ?? 'donor';
 
+      if (role == 'donor') {
+        String verificationStatus = userDoc.get('verificationStatus') ?? 'verified';
+        if (verificationStatus == 'pending') {
+          setState(() => isLoading = false);
+          if (mounted) {
+            Navigator.pushReplacementNamed(context, '/verification_pending');
+          }
+          return;
+        } else if (verificationStatus == 'rejected') {
+          setState(() => isLoading = false);
+          if (mounted) {
+            Navigator.pushReplacementNamed(context, '/verification_rejected');
+          }
+          return;
+        }
+      }
+
       if (mounted) {
         setState(() => isLoading = false);
 

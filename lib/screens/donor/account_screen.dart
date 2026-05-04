@@ -53,8 +53,6 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   Future<void> _saveProfile(
-    String name,
-    String email,
     String phone,
     String bloodType,
   ) async {
@@ -65,8 +63,6 @@ class _AccountScreenState extends State<AccountScreen> {
         .collection('users')
         .doc(user.uid)
         .update({
-          'name': name,
-          'email': email,
           'phone': phone,
           'bloodType': bloodType,
         });
@@ -90,9 +86,9 @@ class _AccountScreenState extends State<AccountScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildEditField('Name', nameCtrl, Icons.person_outline),
+              _buildEditField('Name', nameCtrl, Icons.person_outline, enabled: false),
               SizedBox(height: 12),
-              _buildEditField('Email', emailCtrl, Icons.mail_outline),
+              _buildEditField('Email', emailCtrl, Icons.mail_outline, enabled: false),
               SizedBox(height: 12),
               _buildEditField('Phone', phoneCtrl, Icons.phone_outlined),
               SizedBox(height: 12),
@@ -112,8 +108,6 @@ class _AccountScreenState extends State<AccountScreen> {
           TextButton(
             onPressed: () async {
               await _saveProfile(
-                nameCtrl.text.trim(),
-                emailCtrl.text.trim(),
                 phoneCtrl.text.trim(),
                 bloodCtrl.text.trim(),
               );
@@ -136,10 +130,12 @@ class _AccountScreenState extends State<AccountScreen> {
   Widget _buildEditField(
     String label,
     TextEditingController controller,
-    IconData icon,
-  ) {
+    IconData icon, {
+    bool enabled = true,
+  }) {
     return TextField(
       controller: controller,
+      enabled: enabled,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, size: 20, color: Color(0xFF8E8E93)),

@@ -7,6 +7,7 @@ import 'Auth.gate.dart';
 import 'screens/auth/welcome_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/registration_screen.dart';
+import 'screens/auth/verification_status_screen.dart';
 import 'screens/donor/home_navigation.dart';
 import 'screens/donor/dashboard_screen.dart';
 import 'screens/donor/account_screen.dart';
@@ -90,6 +91,10 @@ class MyApp extends StatelessWidget {
         '/login': (context) => LoginScreen(),
         // Registration screen
         '/register': (context) => RegistrationScreen(),
+        // Verification pending screen
+        '/verification_pending': (context) => VerificationStatusScreen(status: 'pending'),
+        // Verification rejected screen
+        '/verification_rejected': (context) => VerificationStatusScreen(status: 'rejected'),
         // Donor's home navigation (bottom nav bar)
         '/home': (context) => HomeNavigation(),
         // Donor's dashboard

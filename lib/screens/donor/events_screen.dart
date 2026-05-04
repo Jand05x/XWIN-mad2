@@ -37,17 +37,14 @@ class EventsScreen extends StatelessWidget {
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('events')
-            .orderBy('createdAt', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
-          // Still loading
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(
               child: CircularProgressIndicator(color: Color(0xFF1565C0)),
             );
           }
 
-          // Firestore error
           if (snapshot.hasError) {
             return Center(
               child: Text(
@@ -57,8 +54,17 @@ class EventsScreen extends StatelessWidget {
             );
           }
 
-          // No events yet
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          final docs = snapshot.data?.docs ?? [];
+          docs.sort((a, b) {
+            final aTime = (a.data() as Map<String, dynamic>)['createdAt'] as Timestamp?;
+            final bTime = (b.data() as Map<String, dynamic>)['createdAt'] as Timestamp?;
+            if (aTime == null && bTime == null) return 0;
+            if (aTime == null) return 1;
+            if (bTime == null) return -1;
+            return bTime.compareTo(aTime);
+          });
+
+          if (docs.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -82,8 +88,6 @@ class EventsScreen extends StatelessWidget {
             );
           }
 
-          final docs = snapshot.data!.docs;
-
           return ListView.builder(
             padding: EdgeInsets.all(20),
             itemCount: docs.length,
@@ -96,6 +100,7 @@ class EventsScreen extends StatelessWidget {
               final date = data['date'] ?? '';
               final location = data['location'] ?? 'Unknown Location';
               final attendees = data['attendees'] ?? 0;
+              final rsvpedUsers = (data['rsvpedUsers'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
 
               return _buildEventCard(
                 context: context,
@@ -104,6 +109,7 @@ class EventsScreen extends StatelessWidget {
                 date: date,
                 location: location,
                 attendees: attendees,
+                rsvpedUsers: rsvpedUsers,
                 color: color,
               );
             },
@@ -121,8 +127,11 @@ class EventsScreen extends StatelessWidget {
     required String date,
     required String location,
     required int attendees,
+    required List<String> rsvpedUsers,
     required Color color,
   }) {
+    final user = FirebaseAuth.instance.currentUser;
+    final hasRsvped = user != null && rsvpedUsers.contains(user.uid);
     return Container(
       margin: EdgeInsets.only(bottom: 14),
       padding: EdgeInsets.all(18),
@@ -189,21 +198,37 @@ class EventsScreen extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             height: 46,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: color,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              onPressed: () => _handleRsvp(context, docId),
-              child: Text(
-                'RSVP',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-              ),
-            ),
+            child: hasRsvped
+                ? OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: color,
+                      side: BorderSide(color: color, width: 1.5),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    icon: const Icon(Icons.check_rounded, size: 18),
+                    label: const Text(
+                      'RSVP\'d',
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                    ),
+                    onPressed: () => _handleRsvpToggle(context, docId, true),
+                  )
+                : ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: color,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () => _handleRsvpToggle(context, docId, false),
+                    child: const Text(
+                      'RSVP',
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                    ),
+                  ),
           ),
         ],
       ),
@@ -226,39 +251,58 @@ class EventsScreen extends StatelessWidget {
     );
   }
 
-  // Handle RSVP button - increment attendees and award points
-  void _handleRsvp(BuildContext context, String docId) async {
+  // Handle RSVP toggle - RSVP or cancel, with points management
+  void _handleRsvpToggle(BuildContext context, String docId, bool isCanceling) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
     try {
-      // Increment the attendees count
-      await FirebaseFirestore.instance.collection('events').doc(docId).update({
-        'attendees': FieldValue.increment(1),
-      });
-
-      // Add points for attending event
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
-        'points': FieldValue.increment(5),
-      });
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('RSVP confirmed! +5 points'),
-            backgroundColor: Color(0xFF2E7D32),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+      if (isCanceling) {
+        await FirebaseFirestore.instance.collection('events').doc(docId).update({
+          'rsvpedUsers': FieldValue.arrayRemove([user.uid]),
+          'attendees': FieldValue.increment(-1),
+        });
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+          'points': FieldValue.increment(-5),
+        });
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('RSVP cancelled'),
+              backgroundColor: Color(0xFF8E8E93),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
-          ),
-        );
+          );
+        }
+      } else {
+        await FirebaseFirestore.instance.collection('events').doc(docId).update({
+          'rsvpedUsers': FieldValue.arrayUnion([user.uid]),
+          'attendees': FieldValue.increment(1),
+        });
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+          'points': FieldValue.increment(5),
+        });
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('You\'re attending! +5 points'),
+              backgroundColor: Color(0xFF2E7D32),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+        }
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to RSVP. Please try again.'),
+            content: Text('Failed to update RSVP. Please try again.'),
             backgroundColor: Color(0xFFC62828),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(

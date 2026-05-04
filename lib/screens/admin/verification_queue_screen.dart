@@ -25,7 +25,7 @@ class VerificationQueueScreen extends StatelessWidget {
         stream: FirebaseFirestore.instance
             .collection('users')
             .where('role', isEqualTo: 'donor')
-            .where('status', isEqualTo: 'pending')
+            .where('verificationStatus', isEqualTo: 'pending')
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
@@ -314,7 +314,7 @@ class VerificationQueueScreen extends StatelessWidget {
       await FirebaseFirestore.instance
           .collection('users')
           .doc(docId)
-          .update({'status': status});
+           .update({'verificationStatus': status});
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

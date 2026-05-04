@@ -54,6 +54,20 @@ class AuthGate extends StatelessWidget {
               // User exists in database - get their role and navigate
               if (userSnapshot.hasData && userSnapshot.data!.exists) {
                 String role = userSnapshot.data!.get('role') ?? 'donor';
+                if (role == 'donor') {
+                  String verificationStatus = userSnapshot.data!.get('verificationStatus') ?? 'verified';
+                  if (verificationStatus == 'pending') {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      Navigator.pushReplacementNamed(context, '/verification_pending');
+                    });
+                    return Scaffold(backgroundColor: Colors.white, body: SizedBox());
+                  } else if (verificationStatus == 'rejected') {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      Navigator.pushReplacementNamed(context, '/verification_rejected');
+                    });
+                    return Scaffold(backgroundColor: Colors.white, body: SizedBox());
+                  }
+                }
                 String route = _getRouteForRole(role);
                 // Navigate after build completes
                 WidgetsBinding.instance.addPostFrameCallback((_) {

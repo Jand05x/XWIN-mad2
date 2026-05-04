@@ -72,6 +72,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
           const SizedBox(height: 14),
 
+          _buildVerifyDonorsTile(context),
           _buildActionTile(
             context,
             title: 'Manage Hospitals',
@@ -325,6 +326,91 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                             color: color),
                       ),
           ],
+        );
+      },
+    );
+  }
+
+  Widget _buildVerifyDonorsTile(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .where('role', isEqualTo: 'donor')
+          .where('verificationStatus', isEqualTo: 'pending')
+          .snapshots(),
+      builder: (context, snapshot) {
+        final pendingCount = snapshot.data?.docs.length ?? 0;
+        return GestureDetector(
+          onTap: () => Navigator.pushNamed(context, '/verify'),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 12,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFC62828).withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(Icons.verified_user_rounded, color: Color(0xFFC62828), size: 24),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Verify Donors',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1A1A2E),
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        pendingCount > 0
+                            ? '$pendingCount pending approval'
+                            : 'No pending verifications',
+                        style: const TextStyle(fontSize: 13, color: Color(0xFF8E8E93)),
+                      ),
+                    ],
+                  ),
+                ),
+                if (pendingCount > 0)
+                  Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFC62828),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      pendingCount.toString(),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12),
+                    ),
+                  ),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: Color(0xFFCCCCCC),
+                  size: 22,
+                ),
+              ],
+            ),
+          ),
         );
       },
     );
